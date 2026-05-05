@@ -1,0 +1,655 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0,user-scalable=no">
+<meta name="theme-color" content="#020507">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="application-name" content="Samsung AP Lineage">
+<meta name="description" content="Samsung Galaxy S AP Architecture Lineage S22-S28">
+<title>Samsung AP Lineage</title>
+<link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Bebas+Neue&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#020507;--bg2:#060c12;--bg3:#0a1420;--bd:#0d2030;
+  --text:#c0dce8;--dim:#2e5060;
+  --s22:#bf5fff;--s23:#3b9eff;--s24:#9d6fff;
+  --s25:#00e5cc;--s26:#00ff88;--s27:#ffcc00;--s28:#ff4466;
+  --snap:#ff9900;--exynos:#c060ff;--cancel:#ff3355;
+}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+html,body{height:100%;overflow-x:hidden;overscroll-behavior:none}
+body{background:var(--bg);color:var(--text);font-family:'Share Tech Mono',monospace;font-size:14px;
+  -webkit-font-smoothing:antialiased}
+body::after{content:'';position:fixed;inset:0;pointer-events:none;z-index:0;
+  background-image:linear-gradient(rgba(0,180,255,.016) 1px,transparent 1px),
+    linear-gradient(90deg,rgba(0,180,255,.016) 1px,transparent 1px);
+  background-size:40px 40px}
+
+/* ── LAYOUT ── */
+.page{position:relative;z-index:1;max-width:960px;margin:0 auto;padding:16px 12px 60px}
+
+/* ── HEADER ── */
+.header{text-align:center;padding:16px;background:var(--bg2);border:1px solid #0a2a40;
+  border-radius:12px;margin-bottom:14px;position:relative;overflow:hidden}
+.header::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;
+  background:linear-gradient(90deg,var(--s22),var(--s23),var(--s25),var(--s26),var(--s27),var(--s28))}
+.title{font-family:'Bebas Neue',sans-serif;font-size:24px;letter-spacing:5px;
+  background:linear-gradient(90deg,var(--s22),var(--s23),var(--s25),var(--s26),var(--s27));
+  -webkit-background-clip:text;-webkit-text-fill-color:transparent}
+.sub{font-size:9px;letter-spacing:3px;color:var(--dim);margin-top:3px}
+.legend{display:flex;gap:12px;justify-content:center;margin-top:10px;flex-wrap:wrap}
+.li{display:flex;align-items:center;gap:5px;font-size:9px;color:var(--dim)}
+.dot{width:8px;height:8px;border-radius:2px;border:1.5px solid;flex-shrink:0}
+
+/* ── TABS ── */
+.tabs{display:flex;background:var(--bg2);border:1px solid var(--bd);border-radius:8px;
+  overflow:hidden;margin-bottom:12px}
+.tb{flex:1;padding:9px 4px;font-family:'Share Tech Mono',monospace;font-size:9px;
+  letter-spacing:1px;text-transform:uppercase;background:transparent;border:none;
+  color:var(--dim);cursor:pointer;transition:all .15s;-webkit-appearance:none}
+.tb.on{background:#0a1e30;color:#00e5ff;border-bottom:2px solid #00e5ff}
+.sec{display:none}.sec.on{display:block}
+
+/* ── PROCESS BAR ── */
+.pbar{background:var(--bg2);border:1px solid var(--bd);border-radius:8px;
+  padding:10px 12px;margin-bottom:12px}
+.sl{font-size:8px;letter-spacing:4px;color:var(--dim);text-transform:uppercase;
+  font-weight:700;margin-bottom:7px}
+.prow{display:flex;height:22px;border-radius:4px;overflow:hidden;border:1px solid var(--bd)}
+.pc{flex:1;display:flex;align-items:center;justify-content:center;font-size:7px;
+  font-weight:700;border-right:1px solid rgba(255,255,255,.04)}
+.pc:last-child{border-right:none}
+.ph{display:flex;justify-content:space-between;margin-top:3px;font-size:7px;color:#1a3040}
+
+/* ── GEN LIST ── */
+.glist{display:flex;flex-direction:column;gap:8px}
+
+/* GEN CARD */
+.gcard{}
+.ghead{display:flex;align-items:center;gap:10px;padding:10px 12px;background:var(--bg2);
+  border:1.5px solid var(--bd);border-left-width:5px;cursor:pointer;
+  transition:background .12s;border-radius:8px;flex-wrap:wrap}
+.ghead:active{background:var(--bg3)}
+.ghead.open{border-radius:8px 8px 0 0;border-bottom-color:transparent}
+.ybadge{width:46px;height:46px;border-radius:7px;flex-shrink:0;display:flex;
+  flex-direction:column;align-items:center;justify-content:center;border:1.5px solid}
+.yr{font-size:7px;font-weight:700;letter-spacing:1px}
+.gn{font-family:'Bebas Neue',sans-serif;font-size:18px;line-height:1.1}
+.col{min-width:90px}
+.cll{font-size:7px;letter-spacing:2px;color:var(--dim);margin-bottom:2px;text-transform:uppercase;font-weight:700}
+.cn{font-size:11px;font-weight:700;line-height:1.3}
+.tc{display:inline-block;font-size:8px;font-weight:700;padding:1px 6px;border-radius:3px;
+  background:var(--cancel);color:#fff;margin-left:4px}
+.cr{flex:1;text-align:right;min-width:90px}
+.osv{font-size:7px;color:var(--dim);margin-top:3px}
+.hlv{font-size:8px;font-weight:700;margin-top:2px}
+.arr{font-size:12px;flex-shrink:0;transition:transform .2s}
+.arr.open{transform:rotate(180deg)}
+.tag{display:inline-block;font-size:8px;font-weight:700;padding:2px 7px;border-radius:3px;
+  border:1.5px solid;letter-spacing:.5px;white-space:nowrap;margin-top:2px}
+.tc2{display:inline-block;font-size:8px;font-weight:700;padding:1px 6px;border-radius:3px;
+  background:var(--cancel);color:#fff;margin-left:4px;letter-spacing:1px}
+
+/* PANEL */
+.gpanel{display:none;background:#040b10;border:1.5px solid;border-top:none;
+  border-radius:0 0 8px 8px;padding:12px}
+.gpanel.open{display:block}
+.modrow{margin-bottom:12px}
+.mtag{display:inline-block;font-size:9px;font-weight:700;padding:3px 10px;border-radius:5px;
+  border:1.5px solid;margin:2px 4px 2px 0;cursor:default}
+
+/* S26 model cards */
+.m26grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:7px;margin-bottom:12px}
+.m26card{background:#040f14;border:1px solid #00ff8820;border-radius:7px;padding:10px}
+.m26name{font-family:'Bebas Neue',sans-serif;font-size:14px;color:#00ff88;letter-spacing:1px;margin-bottom:2px}
+.m26code{font-size:7px;color:#00ff8844;letter-spacing:2px;margin-bottom:6px}
+.m26row{display:flex;gap:6px;margin-bottom:3px;align-items:baseline}
+.m26k{font-size:7px;color:#2a5040;font-weight:700;min-width:40px;text-transform:uppercase;flex-shrink:0}
+.m26v{font-size:8px;color:#80bbaa;line-height:1.4}
+
+/* CHIP COMPARE */
+.cg{display:flex;gap:8px;flex-wrap:wrap}
+.cc{flex:1;min-width:220px;border-radius:8px;overflow:hidden;border:1.5px solid}
+.cch{padding:8px 11px;display:flex;align-items:center;justify-content:space-between;
+  border-bottom:1px solid rgba(255,255,255,.06)}
+.ccl{font-size:7px;letter-spacing:2px;opacity:.6;margin-bottom:1px}
+.ccn{font-size:13px;font-weight:800;color:#fff}
+.ccb{padding:9px 11px;background:rgba(0,0,0,.3)}
+.nb{display:inline-block;font-size:8px;font-weight:700;padding:2px 8px;border-radius:3px;
+  border:1px solid;margin-bottom:8px}
+.ar{display:flex;gap:7px;margin-bottom:4px;align-items:flex-start}
+.ak{font-size:8px;font-weight:700;min-width:30px;text-transform:uppercase;letter-spacing:1px;padding-top:1px;flex-shrink:0}
+.av{font-size:9px;color:#90b8c8;line-height:1.5;flex:1}
+.cxb{margin-top:8px;background:rgba(255,51,85,.08);border:1px solid rgba(255,51,85,.25);
+  border-radius:4px;padding:6px 10px;font-size:8px;color:#ff8899;line-height:1.6}
+.gbx{margin-top:8px;background:rgba(0,255,136,.07);border:1px solid rgba(0,255,136,.22);
+  border-radius:4px;padding:5px 10px;font-size:9px;color:#00ff88;font-weight:700}
+.ibx{margin-top:10px;border-left:3px solid;border:1px solid rgba(255,255,255,.05);
+  border-left-width:3px;border-radius:0 6px 6px 0;padding:7px 11px;
+  font-size:9px;color:#98b8c8;line-height:1.7}
+
+/* GENE */
+.gwrap{background:var(--bg2);border:1px solid var(--bd);border-radius:10px;padding:12px;margin-top:16px}
+.generow{display:flex;overflow-x:auto;scrollbar-width:none}
+.generow::-webkit-scrollbar{display:none}
+.gc{flex:1;text-align:center;padding:8px 4px;border:1.5px solid;border-right:none;min-width:68px}
+.gc:first-child{border-radius:7px 0 0 7px}
+.gc:last-child{border-right:1.5px solid;border-radius:0 7px 7px 0}
+.gcy{font-size:7px;color:var(--dim);margin-bottom:2px;font-weight:700}
+.gcc{font-family:'Bebas Neue',sans-serif;font-size:12px;letter-spacing:1px}
+.gcp{font-size:7px;color:#4a6a7a;font-weight:700}
+.gcn{display:inline-block;font-size:6px;margin-top:2px;padding:1px 4px;border-radius:2px;border:1px solid}
+
+/* CPU bars */
+.cpulist{display:flex;flex-direction:column;gap:4px;margin-top:11px}
+.cbrow{display:flex;align-items:center;gap:7px}
+.cblbl{width:80px;font-size:8px;font-weight:700;flex-shrink:0}
+.cbtrack{flex:1;background:#060e16;border-radius:3px;height:20px;overflow:hidden;border:1px solid var(--bd)}
+.cbfill{height:100%;display:flex;align-items:center;padding-left:7px;font-size:8px;color:#6a8a9a;border-right:3px solid}
+.cbghz{font-size:10px;font-weight:800;width:52px;text-align:right;flex-shrink:0}
+
+/* ARCH */
+.atabs{display:flex;gap:4px;flex-wrap:wrap;margin-bottom:10px}
+.at{padding:5px 9px;font-family:'Share Tech Mono',monospace;font-size:8px;border:1px solid var(--bd);
+  border-radius:5px;background:var(--bg2);color:var(--dim);cursor:pointer;transition:all .12s;-webkit-appearance:none}
+.at.on{border-color:#e0f0ff;color:#e0f0ff;background:#0a1e2e}
+.apanel{display:none}.apanel.on{display:block}
+.ag2{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px}
+@media(max-width:520px){.ag2{grid-template-columns:1fr}}
+.ac2{background:var(--bg2);border-radius:7px;border:1px solid var(--bd);overflow:hidden}
+.ac2h{padding:7px 10px;font-size:9px;font-weight:700;border-bottom:1px solid rgba(255,255,255,.05)}
+.ac2b{padding:9px 10px}
+.ar2{display:flex;gap:7px;margin-bottom:4px;align-items:flex-start;border-left:2px solid;padding-left:7px}
+.ak2{font-size:7px;font-weight:700;min-width:44px;text-transform:uppercase;letter-spacing:1px;flex-shrink:0}
+.av2{font-size:8px;color:#90b8c8;line-height:1.5;flex:1}
+.chgbox{background:rgba(255,220,0,.04);border:1px solid rgba(255,220,0,.16);
+  border-left:3px solid #ffdd00;border-radius:0 5px 5px 0;
+  padding:6px 10px;font-size:8px;color:#ffe066;line-height:1.7}
+.isabar{display:flex;overflow-x:auto;scrollbar-width:none;margin:7px 0 4px}
+.isabar::-webkit-scrollbar{display:none}
+.ic{flex:1;min-width:60px;text-align:center;padding:6px 3px;border:1px solid;border-right:none}
+.ic:first-child{border-radius:5px 0 0 5px}
+.ic:last-child{border-right:1px solid;border-radius:0 5px 5px 0}
+.iv{font-family:'Bebas Neue',sans-serif;font-size:11px;letter-spacing:1px}
+.icr{font-size:7px;color:#4a6a7a;margin-top:1px}
+.iyr{font-size:6px;color:var(--dim);margin-bottom:1px}
+
+/* ORYON */
+.oh{background:linear-gradient(135deg,#07090a,#0a0c06);border:1px solid #281400;
+  border-radius:10px;padding:14px;margin-bottom:12px;position:relative;overflow:hidden}
+.oh::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;
+  background:linear-gradient(90deg,#ff6a00,#ffb800,#fff8cc)}
+.ot{font-family:'Bebas Neue',sans-serif;font-size:20px;letter-spacing:5px;
+  background:linear-gradient(90deg,#ff6a00,#ffb800);
+  -webkit-background-clip:text;-webkit-text-fill-color:transparent;margin-bottom:2px}
+.ocgrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:8px;margin-bottom:12px}
+.oc{background:var(--bg2);border-radius:8px;overflow:hidden;border:1.5px solid}
+.och{padding:8px 11px;border-bottom:1px solid rgba(255,255,255,.05)}
+.ocb{padding:9px 11px}
+.ocpf{display:flex;gap:5px;margin-top:7px;flex-wrap:wrap}
+.pfi{background:#060e16;border:1px solid #0e2030;border-radius:3px;padding:4px 6px;
+  text-align:center;flex:1;min-width:48px}
+.pfv{font-size:11px;font-weight:800}
+.pfl{font-size:6px;color:var(--dim);margin-top:1px}
+.sdt{width:100%;border-collapse:collapse}
+.sdt th{font-size:8px;letter-spacing:2px;color:var(--dim);text-align:left;
+  padding:5px 7px;border-bottom:1px solid var(--bd);font-weight:700}
+.sdt td{font-size:8px;padding:6px 7px;border-bottom:1px solid #0a1a24;vertical-align:top;line-height:1.4}
+.bdg{display:inline-block;font-size:7px;font-weight:700;padding:1px 6px;border-radius:2px;white-space:nowrap}
+
+/* neon glow */
+.neon{text-shadow:0 0 8px currentColor,0 0 18px currentColor}
+
+/* bottom nav for Android feel */
+.bnav{display:none}
+@media(max-width:600px){
+  .bnav{display:flex;position:fixed;bottom:0;left:0;right:0;z-index:100;
+    background:#040b10;border-top:1px solid var(--bd);padding:0}
+  .bntb{flex:1;padding:10px 4px;font-family:'Share Tech Mono',monospace;font-size:8px;
+    letter-spacing:1px;text-align:center;background:transparent;border:none;
+    color:var(--dim);cursor:pointer;-webkit-appearance:none;transition:color .15s;line-height:1.5}
+  .bntb.on{color:#00e5ff}
+  .bntb .bicon{font-size:16px;display:block;margin-bottom:2px}
+  .page{padding-bottom:80px}
+  .tabs{display:none}
+}
+</style>
+</head>
+<body>
+<div class="page">
+
+  <!-- HEADER -->
+  <div class="header">
+    <div style="font-size:8px;letter-spacing:6px;color:var(--dim);margin-bottom:3px">SAMSUNG SYSTEM LSI · QUALCOMM</div>
+    <div class="title">GALAXY S · AP LINEAGE</div>
+    <div class="sub">S22 ~ S28 · Pipeline · Cache · Bus · NPU · GPU · ISP · ARM ISA</div>
+    <div class="legend">
+      <div class="li"><div class="dot" style="background:#bf5fff22;border-color:#bf5fff"></div>Exynos 출시</div>
+      <div class="li"><div class="dot" style="background:#ff335522;border-color:#ff3355"></div>Exynos 취소</div>
+      <div class="li"><div class="dot" style="background:#ff990022;border-color:#ff9900"></div>Snapdragon</div>
+      <div class="li"><div class="dot" style="background:#00ff8822;border-color:#00ff88"></div>출시</div>
+      <div class="li"><div class="dot" style="background:#ffcc0022;border-color:#ffcc00"></div>개발중</div>
+    </div>
+  </div>
+
+  <!-- DESKTOP TABS -->
+  <div class="tabs">
+    <button class="tb on" onclick="sw('lineage',this)">📱 Galaxy S 계보</button>
+    <button class="tb" onclick="sw('arch',this)">🔬 아키텍처</button>
+    <button class="tb" onclick="sw('oryon',this)">⚡ Oryon</button>
+  </div>
+
+  <!-- ── LINEAGE ── -->
+  <div class="sec on" id="tab-lineage">
+    <div class="pbar">
+      <div class="sl">Process Node</div>
+      <div class="prow">
+        <div class="pc" style="background:#bf5fff14;color:#bf5fff">S22 4nm</div>
+        <div class="pc" style="background:#3b9eff14;color:#3b9eff">S23 4nm</div>
+        <div class="pc" style="background:#9d6fff14;color:#9d6fff">S24 4nm</div>
+        <div class="pc" style="background:#00e5cc14;color:#00e5cc">S25 3nm</div>
+        <div class="pc" style="background:#00ff8814;color:#00ff88">S26 2nm</div>
+        <div class="pc" style="background:#ffcc0014;color:#ffcc00">S27 2nm</div>
+        <div class="pc" style="background:#ff446614;color:#ff4466">S28 2nm+</div>
+      </div>
+      <div class="ph"><span>← FinFET</span><span>GAA →</span></div>
+    </div>
+    <div class="glist" id="genList"></div>
+    <div class="gwrap">
+      <div class="sl">Exynos 코드네임 계보</div>
+      <div class="generow" id="geneRow"></div>
+      <div class="cpulist" id="cpuList" style="margin-top:11px">
+        <div class="sl">CPU 코어 진화</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── ARCH ── -->
+  <div class="sec" id="tab-arch">
+    <div class="pbar">
+      <div class="sl">ARM ISA 버전</div>
+      <div class="isabar" id="isaBar"></div>
+      <div style="font-size:7px;color:#1a3040;margin-top:2px">★ Oryon = ARMv8.7-A 완전 커스텀 · Gen3부터 ARMv9.2-A</div>
+    </div>
+    <div class="atabs" id="archTabs"></div>
+    <div id="archPanels"></div>
+  </div>
+
+  <!-- ── ORYON ── -->
+  <div class="sec" id="tab-oryon">
+    <div class="oh">
+      <div class="ot">QUALCOMM ORYON LINEAGE</div>
+      <div style="font-size:8px;color:#5a3000;margin-top:2px">Nuvia 인수(2021) → 커스텀 ARM → Galaxy S25 탑재 → SM8950 2nm</div>
+      <div style="margin-top:7px;font-size:8px;color:#6a4a10;line-height:1.8">
+        <strong style="color:#ffcc00">Gen 1</strong> PC · ARMv8.7-A · 12코어 · 4.3GHz &nbsp;
+        <strong style="color:#ff9900">Gen 2</strong> 모바일 · 2P+6E · L2 24MB &nbsp;
+        <strong style="color:#ffb800">Gen 3</strong> +20% · ARMv9.2-A &nbsp;
+        <strong style="color:#ffe066">Gen 3+</strong> SM8950 · 2nm
+      </div>
+    </div>
+    <div class="ocgrid" id="oryCards"></div>
+    <div class="gwrap">
+      <div class="sl">Snapdragon 8 Mobile AP Roadmap</div>
+      <div style="overflow-x:auto"><table class="sdt" id="sdTable"></table></div>
+      <div style="margin-top:10px;background:#0a0800;border:1.5px solid #ff8800;border-radius:8px;overflow:hidden">
+        <div style="background:#ff880014;padding:8px 12px;border-bottom:1px solid #ff880028;display:flex;align-items:center;gap:8px;flex-wrap:wrap">
+          <span style="font-family:'Bebas Neue',sans-serif;font-size:15px;color:#ff9900;letter-spacing:2px">SM8950 vs SM8975 Pro</span>
+          <span class="bdg" style="color:#ff9900;background:#ff880014;border:1px solid #ff880030">2nm TSMC · 2027 예정</span>
+        </div>
+        <div style="padding:10px 12px;display:flex;gap:10px;flex-wrap:wrap">
+          <div style="flex:1;min-width:180px">
+            <div class="sl" style="color:#ff8800;margin-bottom:5px">SM8950 표준</div>
+            <div class="ar"><span class="ak" style="color:#ff9900">공정</span><span class="av">TSMC 2nm N2</span></div>
+            <div class="ar"><span class="ak" style="color:#ff9900">CPU</span><span class="av">2+3+3 Oryon Gen3</span></div>
+            <div class="ar"><span class="ak" style="color:#ff9900">GPU</span><span class="av">Adreno 845 · GMEM 12MB</span></div>
+            <div class="ar"><span class="ak" style="color:#ff9900">RAM</span><span class="av">LPDDR5X</span></div>
+          </div>
+          <div style="flex:1;min-width:180px">
+            <div class="sl" style="color:#ffd700;margin-bottom:5px">SM8975 Pro</div>
+            <div class="ar"><span class="ak" style="color:#ffd700">공정</span><span class="av">TSMC 2nm N2P</span></div>
+            <div class="ar"><span class="ak" style="color:#ffd700">CPU</span><span class="av">2+3+3 Oryon 고클럭</span></div>
+            <div class="ar"><span class="ak" style="color:#ffd700">GPU</span><span class="av">Adreno 850 · GMEM 18MB</span></div>
+            <div class="ar"><span class="ak" style="color:#ffd700">RAM</span><span class="av"><strong style="color:#ffd700">LPDDR6</strong> — Android 최초</span></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<!-- MOBILE BOTTOM NAV -->
+<nav class="bnav" id="bnav">
+  <button class="bntb on" onclick="swMob('lineage',0)"><span class="bicon">📱</span>계보</button>
+  <button class="bntb" onclick="swMob('arch',1)"><span class="bicon">🔬</span>아키텍처</button>
+  <button class="bntb" onclick="swMob('oryon',2)"><span class="bicon">⚡</span>Oryon</button>
+</nav>
+
+<script>
+// ══════════════════════════════════════════
+// DATA
+// ══════════════════════════════════════════
+const G=[
+  {yr:2022,id:"S22",c:"#bf5fff",
+   phone:{code:"Rainbow",name:"S22",models:["S22","S22+","S22 Ultra"],st:"released"},
+   ex:{used:true,code:"Pamir",chip:"Exynos 2200",node:"4nm (SF4)",reg:"한국·유럽 30%",
+     cpu:"1×X2(2.8G)+3×A710(2.5G)+4×A510(1.8G)",gpu:"Xclipse 920 · RDNA2 · 4WGP/8CU",
+     npu:"NPU 6세대 · 30TOPS · 16K MAC",isp:"Imagiq 790 · 2.7GP/s · 3센서",ram:"LPDDR5",storage:"UFS 3.1"},
+   snap:{chip:"Snapdragon 8 Gen 1",node:"4nm TSMC",reg:"미국·중국 70%",
+     cpu:"1×X2(3.0G)+3×A710+4×A510",gpu:"Adreno 730",npu:"Hexagon 780 · 29TOPS",isp:"Spectra · 3.2GP/s"},
+   os:"Android 12 / One UI 4.1",hl:"S22 Ultra S펜 내장 첫 도입 · 첫 AMD GPU Xclipse"},
+  {yr:2023,id:"S23",c:"#3b9eff",
+   phone:{code:"Diamond",name:"S23",models:["S23","S23+","S23 Ultra","S23 FE"],st:"released"},
+   ex:{used:false,code:"Quadra",chip:"Exynos 2300",node:"3nm (SF3) — 취소",reg:"취소",
+     cpu:"1×X3(3.09G)+4×A715+4×A510",gpu:"Xclipse 930 · RDNA2 예정",
+     npu:"MX NPU ~40TOPS 예정",isp:"Imagiq 850 예정",ram:"LPDDR5X 예정",storage:"UFS 4.0 예정",
+     cancel:"MX 스마트폰 사업부 거부 — DS 반도체 사업부 내부 갈등으로 양산 직전 중단"},
+   snap:{chip:"Snapdragon 8 Gen 2 for Galaxy",node:"4nm TSMC",reg:"전 세계 100%",
+     cpu:"1×X3(3.36G)+2×A715+2×A710+3×A510",gpu:"Adreno 740 · Vulkan 1.3",npu:"Hexagon 780 · 34TOPS",isp:"Spectra · 200MP"},
+   os:"Android 13 / One UI 5.1",hl:"전 세계 SD 단일화 최초 · Exynos 2300 Quadra 취소"},
+  {yr:2024,id:"S24",c:"#9d6fff",
+   phone:{code:"Eureka",name:"S24",models:["S24","S24+","S24 Ultra","S24 FE"],st:"released"},
+   ex:{used:true,code:"(미공개)",chip:"Exynos 2400",node:"4nm (SF4E)",reg:"한국·유럽 S24/S24+",
+     cpu:"1×X4(3.19G)+2×A720(2.9G)+3×A720(2.6G)+4×A520(1.95G) — 10코어",
+     gpu:"Xclipse 940 · RDNA3 · 6WGP/12CU · Mesh Shading",npu:"MX NPU · 50TOPS · 24K MAC · 2x↑",
+     isp:"Imagiq 990 · 3.6GP/s · 4센서 · 200MP",ram:"LPDDR5X",storage:"UFS 4.0"},
+   snap:{chip:"Snapdragon 8 Gen 3 for Galaxy",node:"4nm TSMC",reg:"미국·Ultra 전 세계",
+     cpu:"1×X4(3.39G)+5×A720+2×A520",gpu:"Adreno 750 · UE5 Nanite",npu:"Hexagon 780 · 45TOPS",isp:"Spectra · 4.3GP/s"},
+   os:"Android 14 / One UI 6.1",hl:"Galaxy AI 첫 도입 · 7년 업데이트 · 데카코어 Exynos"},
+  {yr:2025,id:"S25",c:"#00e5cc",
+   phone:{code:"Paradigm",name:"S25",models:["S25","S25+","S25 Ultra","S25 Edge","S25 FE"],st:"released"},
+   ex:{used:true,code:"Solomon",chip:"Exynos 2500",node:"3nm GAA (SF3)",reg:"한국 S25/S25+ 수율 제한",
+     cpu:"1×X925(3.3G)+2×A725(2.74G)+5×A725(2.36G)+2×A520(1.8G) — 10코어",
+     gpu:"Xclipse 950 · RDNA3+ · 8WGP/16CU 2-engine",npu:"MX NPU 2세대 · 60TOPS · 32K MAC",
+     isp:"Imagiq 1100+VPS · MLNR · 4.0GP/s",ram:"LPDDR5X",storage:"UFS 4.0"},
+   snap:{chip:"Snapdragon 8 Elite for Galaxy",node:"3nm TSMC",reg:"전 세계 · S25 Edge",
+     cpu:"2×Oryon Gen2 Prime(4.47G)+6×Oryon Gen2 Perf(3.53G) — ARMv8.7-A 커스텀",
+     gpu:"Adreno 830 · 3슬라이스 1.1GHz · +40%",npu:"Hexagon Scalar8+Vector6 · 45TOPS",isp:"Spectra · RAW직접처리 · NPU직결 · 320MP"},
+   os:"Android 15 / One UI 7",hl:"S25 Edge 5.8mm · Oryon Gen2 모바일 첫 탑재"},
+  {yr:2026,id:"S26",c:"#00ff88",miracle:true,
+   phone:{code:"Miracle",name:"S26",
+     models:["S26","S26+","S26 Ultra"],st:"released",
+     ms:[
+       {name:"Galaxy S26",code:"M1",disp:"6.3\" LTPO AMOLED 2X",bat:"4,300mAh",chg:"25W",cam:"50MP f/1.8 · 12MP UW · 10MP 3×",mem:"256/512GB · 12GB RAM",chip:"SD 8 Elite Gen5 (북미·일본·중국) / Exynos 2600 (그 외)"},
+       {name:"Galaxy S26+",code:"M2",disp:"6.7\" LTPO AMOLED 2X",bat:"4,900mAh",chg:"45W",cam:"50MP f/1.7 · 12MP UW · 10MP 3×",mem:"256/512GB · 12GB RAM",chip:"동일 칩셋 정책"},
+       {name:"Galaxy S26 Ultra",code:"M3",disp:"6.9\" LTPO AMOLED 2X",bat:"5,000mAh",chg:"60W ★최고",cam:"200MP f/1.4 · 50MP UW · 10MP 3× · 50MP 5× ALoP",mem:"256/512GB 12GB · 1TB 16GB",chip:"SD 8 Elite Gen5 전 세계 단일 · S펜 · Privacy Display 세계 최초"},
+     ]},
+   ex:{used:true,code:"Thetis",chip:"Exynos 2600",node:"2nm GAA (SF2) ★세계 최초",reg:"한국·유럽 S26/S26+",
+     cpu:"1×C1-Ultra(3.8G)+3×C1-Pro(3.25G)+6×C1-Pro(2.75G) — ARMv9.3 ARM Lumex",
+     gpu:"Xclipse 960 · RDNA3+ · 8+WGP",npu:"MX NPU 3세대 · 32K MAC · +113% · PQC · 가상화",
+     isp:"VPS 2세대 · DVNR · APV · 320MP · 4.5GP/s",ram:"LPDDR5X 10.7Gbps",storage:"UFS 4.0"},
+   snap:{chip:"Snapdragon 8 Elite Gen 5",node:"3nm TSMC N3P",reg:"미국·일본·중국·Ultra 전 세계",
+     cpu:"2×Oryon Gen3 Prime(4.61G)+6×Oryon Gen3 Perf(3.63G) — ARMv9.2-A",
+     gpu:"Adreno 850 · GMEM 18MB · HW매트릭스",npu:"Hexagon NPU Gen3 · HW매트릭스 최초 · +46%",isp:"Spectra · 트리플48MP 4K60fps · 320MP"},
+   os:"Android 16 / One UI 8.5",hl:"★Miracle · 세계 최초 2nm GAA · Privacy Display · 60W"},
+  {yr:2027,id:"S27",c:"#ffcc00",
+   phone:{code:"미정",name:"S27",models:["S27","S27+","S27 Ultra"],st:"upcoming"},
+   ex:{used:true,code:"Ulysses",chip:"Exynos 2700",node:"2nm GAA (SF2P)",reg:"한국·유럽 예정",
+     cpu:"ARM C2-Ultra+C2-Pro — IPC+35% · 4.2GHz",gpu:"Xclipse 970 (RDNA4 예상)",
+     npu:"MX NPU 4세대",isp:"VPS 3세대",ram:"LPDDR6 14.4Gbps",storage:"UFS 5.0",
+     gbench:"SC 2,603 / MC 10,350 (초기 샘플)"},
+   snap:{chip:"Snapdragon 8 Elite Gen 6 (SM8950/8975)",node:"2nm TSMC",reg:"미정",
+     cpu:"2+3+3 Oryon Gen3 계열",gpu:"Adreno 845/850 (12/18MB)",npu:"Hexagon Gen3+",isp:"Spectra Gen4"},
+   os:"Android 17 / One UI 9 예정",hl:"SM8950 표준 vs SM8975 Pro · LPDDR6 Android 최초"},
+  {yr:2028,id:"S28",c:"#ff4466",
+   phone:{code:"미정",name:"S28",models:["S28","S28+","S28 Ultra"],st:"concept"},
+   ex:{used:true,code:"Vanguard",chip:"Exynos 2800",node:"2nm GAA (SF2P+) · 광학축소",reg:"예정",
+     cpu:"ARM C2 계열 개선",gpu:"삼성 자체 GPU ★AMD 탈피 최초",
+     npu:"MX NPU 5세대 예정",isp:"미정",ram:"LPDDR6+",storage:"UFS 5.0+"},
+   snap:{chip:"미정",node:"1.4nm or 2nm",reg:"미정",cpu:"미정",gpu:"미정",npu:"미정",isp:"미정"},
+   os:"Android 18 / One UI 10 예정",hl:"삼성 자체 GPU 첫 탑재 · SF2P+ 수율 우선"},
+];
+const ST={released:{l:"출시",c:"#00ff88",bg:"rgba(0,255,136,.08)",bd:"rgba(0,255,136,.3)"},
+  upcoming:{l:"개발중",c:"#ffcc00",bg:"rgba(255,204,0,.08)",bd:"rgba(255,204,0,.3)"},
+  concept:{l:"설계단계",c:"#8899aa",bg:"rgba(136,153,170,.08)",bd:"rgba(136,153,170,.3)"}};
+
+function apR(d,lc){
+  return[['CPU',d.cpu,'#b0d0e8'],['GPU',d.gpu,'#c8a8ff'],['NPU',d.npu,'#70f0b8'],
+    ['ISP',d.isp,'#70b8f0'],['RAM',d.ram,'#f0a8c8'],['UFS',d.storage,'#f0c870']]
+    .filter(([,v])=>v).map(([l,v,vc])=>`<div class="ar"><span class="ak" style="color:${lc}">${l}</span><span class="av" style="color:${vc}">${v}</span></div>`).join('');
+}
+function mkCC(title,data,color,cancelled){
+  return`<div class="cc" style="border-color:${cancelled?'#ff3355':color}">
+    <div class="cch" style="background:${cancelled?'#250007':color+'12'};border-bottom-color:${cancelled?'#ff335518':color+'18'}">
+      <div><div class="ccl">${title}</div>
+      <div class="ccn" style="color:${cancelled?'#ff5566':'#fff'};${cancelled?'text-decoration:line-through':''}">${data.chip}${data.code&&data.code!=='미공개'?`<span style="font-size:9px;color:${cancelled?'#ff7788':color+'99'};margin-left:6px">"${data.code}"</span>`:''}</div></div>
+      ${cancelled?'<span class="tc2">취소</span>':''}
+    </div>
+    <div class="ccb">
+      <div class="nb" style="color:${cancelled?'#ff5566':color};background:${cancelled?'rgba(255,51,85,.08)':color+'0d'};border-color:${cancelled?'rgba(255,51,85,.2)':color+'25'}">${data.node}${data.reg?` · <span style="color:#305060;font-weight:400">${data.reg}</span>`:''}</div>
+      ${apR(data,cancelled?'#ff7788':color)}
+      ${data.cancel?`<div class="cxb">⚠ ${data.cancel}</div>`:''}
+      ${data.gbench?`<div class="gbx">📊 ${data.gbench}</div>`:''}
+    </div>
+  </div>`;
+}
+
+// Render gen list
+const gl=document.getElementById('genList');
+G.forEach((g,i)=>{
+  const st=ST[g.phone.st];
+  const exC=g.ex.used?'#c060ff':'#ff3355';
+  const mBadge=g.miracle?`<span style="font-size:7px;background:#00ff8814;color:#00ff88;border:1px solid #00ff8835;border-radius:2px;padding:1px 5px;margin-left:4px;letter-spacing:1px">Miracle</span>`:'';
+  const modCards=g.phone.ms?`<div class="m26grid">${g.phone.ms.map(m=>`
+    <div class="m26card">
+      <div class="m26name">${m.name}</div>
+      <div class="m26code">코드명 ${m.code}</div>
+      ${[['디스플레이',m.disp],['배터리',m.bat],['충전',m.chg],['카메라',m.cam],['저장소',m.mem],['칩셋',m.chip]].map(([k,v])=>`<div class="m26row"><span class="m26k">${k}</span><span class="m26v">${v}</span></div>`).join('')}
+    </div>`).join('')}</div>`:' ';
+  gl.insertAdjacentHTML('beforeend',`<div class="gcard">
+    <div class="ghead" id="gh${i}" style="border-left-color:${g.c}" onclick="tog(${i})">
+      <div class="ybadge" style="background:${g.c}10;border-color:${g.c}">
+        <span class="yr" style="color:${g.c}">${g.yr}</span>
+        <span class="gn neon" style="color:${g.c}">${g.id}</span>
+      </div>
+      <div class="col">
+        <div class="cll">Phone</div>
+        <div class="cn" style="color:#dceef8">${g.phone.name}${mBadge}</div>
+        <span class="tag" style="color:${g.c};background:${g.c}10;border-color:${g.c}30">"${g.phone.code}"</span>
+      </div>
+      <div class="col" style="min-width:120px">
+        <div class="cll">Exynos</div>
+        <div><span class="cn ${g.ex.used?'':'strike'}" style="color:${exC}">${g.ex.chip}</span>${!g.ex.used?'<span class="tc">취소</span>':''}</div>
+        ${g.ex.used&&g.ex.code!=='미공개'?`<div style="font-size:8px;color:${exC}77">"${g.ex.code}"</div>`:''}
+        <span class="tag" style="color:${exC};background:${exC}0d;border-color:${exC}25">${g.ex.node}</span>
+      </div>
+      <div class="col" style="min-width:130px">
+        <div class="cll">Snapdragon</div>
+        <div class="cn" style="color:#ff9900">${g.snap.chip}</div>
+        <span class="tag" style="color:#ff9900;background:#ff99000d;border-color:#ff990025">${g.snap.node}</span>
+      </div>
+      <div class="cr">
+        <span style="font-size:8px;font-weight:700;padding:2px 8px;border-radius:3px;color:${st.c};background:${st.bg};border:1.5px solid ${st.bd}">${st.l}</span>
+        <div class="osv">${g.os}</div>
+        <div class="hlv neon" style="color:${g.c}">▸ ${g.hl}</div>
+      </div>
+      <span class="arr" id="ar${i}" style="color:${g.c}">▼</span>
+    </div>
+    <div class="gpanel" id="gp${i}" style="border-color:${g.c}">
+      ${g.miracle?`<div style="background:#00ff880a;border:1px solid #00ff8822;border-radius:5px;padding:7px 11px;margin-bottom:10px;font-size:8px;color:#50b870;line-height:1.6">✦ <strong style="color:#00ff88">프로젝트 코드네임: Miracle</strong> — M1=S26 / M2=S26+ / M3=S26 Ultra</div>`:''}
+      ${modCards}
+      <div class="modrow">
+        <div class="sl" style="margin-bottom:5px">Models</div>
+        ${g.phone.models.map(m=>`<span class="mtag" style="color:${g.c};background:${g.c}0d;border-color:${g.c}">${m}</span>`).join('')}
+      </div>
+      <div class="cg">${mkCC('EXYNOS — 삼성 자체',g.ex,g.ex.used?'#c060ff':'#ff3355',!g.ex.used)}${mkCC('SNAPDRAGON — Qualcomm',g.snap,'#ff9900',false)}</div>
+      <div class="ibx" style="border-left-color:${g.c};background:rgba(0,0,0,.15)">💡 <strong style="color:${g.c}">핵심:</strong> ${g.hl}</div>
+    </div>
+  </div>`);
+});
+function tog(i){
+  const p=document.getElementById('gp'+i),h=document.getElementById('gh'+i),a=document.getElementById('ar'+i);
+  const o=p.classList.toggle('open');h.classList.toggle('open');a.classList.toggle('open');
+  h.style.borderColor=o?G[i].c:'var(--bd)';h.style.borderLeftColor=G[i].c;
+  h.style.boxShadow=o?`0 0 14px ${G[i].c}1e`:'';
+}
+
+// Gene row
+const GENE=[
+  {code:"Pamir",chip:"2200",yr:"S22",used:true,node:"4nm",c:"#bf5fff"},
+  {code:"Quadra",chip:"2300",yr:"S23",used:false,node:"취소",c:"#ff3355"},
+  {code:"(미공개)",chip:"2400",yr:"S24",used:true,node:"4nm",c:"#9d6fff"},
+  {code:"Solomon",chip:"2500",yr:"S25",used:true,node:"3nm",c:"#00e5cc"},
+  {code:"Thetis",chip:"2600",yr:"S26",used:true,node:"2nm★",c:"#00ff88"},
+  {code:"Ulysses",chip:"2700",yr:"S27",used:true,node:"2nm P",c:"#ffcc00"},
+  {code:"Vanguard",chip:"2800",yr:"S28",used:true,node:"2nm P+",c:"#ff4466"},
+];
+const gr=document.getElementById('geneRow');
+GENE.forEach((e,i,arr)=>{
+  gr.insertAdjacentHTML('beforeend',`<div class="gc" style="background:${e.used?e.c+'0a':'#180005'};border-color:${e.c};${i===0?'border-radius:7px 0 0 7px':''}${i===arr.length-1?'border-right:1.5px solid '+e.c+';border-radius:0 7px 7px 0':''}">
+    <div class="gcy">${e.yr}</div>
+    <div class="gcc neon ${e.used?'':'strike'}" style="color:${e.c}">${e.code}</div>
+    <div class="gcp">Ex ${e.chip}</div>
+    <div class="gcn" style="color:${e.c};background:${e.c}0c;border-color:${e.c}25">${e.node}</div>
+  </div>`);
+});
+
+// CPU bars
+const CPUD=[
+  {g:"S22 Exynos",core:"X2 · A710 · A510",ghz:"2.8GHz",c:"#bf5fff",w:56},
+  {g:"S23 SD",core:"X3 · A715 · A710 · A510",ghz:"3.36GHz",c:"#3b9eff",w:67},
+  {g:"S24 Exynos",core:"X4 · A720×5 · A520 (10코어)",ghz:"3.19GHz",c:"#9d6fff",w:64},
+  {g:"S25 SD",core:"Oryon Gen2 2P+6E — ARM 탈피",ghz:"4.47GHz",c:"#00e5cc",w:89},
+  {g:"S26 Ex",core:"C1-Ultra · C1-Pro ARMv9.3",ghz:"3.8GHz",c:"#00ff88",w:76},
+  {g:"S26 SD",core:"Oryon Gen3 2P+6E · +20%",ghz:"4.61GHz",c:"#44ee88",w:92},
+  {g:"S27 Exynos",core:"ARM C2-Ultra · C2-Pro +35%",ghz:"4.2GHz",c:"#ffcc00",w:84},
+];
+const cl=document.getElementById('cpuList');
+CPUD.forEach(r=>{
+  cl.insertAdjacentHTML('beforeend',`<div class="cbrow">
+    <div class="cblbl neon" style="color:${r.c}">${r.g}</div>
+    <div class="cbtrack"><div class="cbfill" style="width:${r.w}%;background:${r.c}12;border-right-color:${r.c}">${r.core}</div></div>
+    <div class="cbghz neon" style="color:${r.c}">${r.ghz}</div>
+  </div>`);
+});
+
+// ISA bar
+const ISA=[
+  {v:"ARMv9.0",core:"X2/A710",yr:"S22",c:"#bf5fff"},
+  {v:"ARMv9.0",core:"X3/A715",yr:"S23",c:"#3b9eff"},
+  {v:"ARMv9.2",core:"X4/A720",yr:"S24",c:"#9d6fff"},
+  {v:"ARMv8.7★",core:"Oryon G2",yr:"S25 SD",c:"#00e5cc"},
+  {v:"ARMv9.3",core:"C1 Lumex",yr:"S26 Ex",c:"#00ff88"},
+  {v:"ARMv9.2",core:"Oryon G3",yr:"S26 SD",c:"#44ee66"},
+  {v:"ARMv9.2+",core:"Gen3+",yr:"S27",c:"#ffcc00"},
+];
+const ib=document.getElementById('isaBar');
+ISA.forEach((e,i,arr)=>{
+  ib.insertAdjacentHTML('beforeend',`<div class="ic" style="background:${e.c}0c;border-color:${e.c};${i===0?'border-radius:5px 0 0 5px':''}${i===arr.length-1?'border-right:1px solid '+e.c+';border-radius:0 5px 5px 0':''}">
+    <div class="iyr">${e.yr}</div>
+    <div class="iv neon" style="color:${e.c}">${e.v}</div>
+    <div class="icr">${e.core}</div>
+  </div>`);
+});
+
+// Arch panels
+const ARCH=[
+  {l:"S22",c:"#bf5fff",exISA:"ARMv9.0-A",sdISA:"ARMv9.0-A",
+   ex:{pipe:"5-wide · 13단계 OoO",cache:"L1-I 192KB · L2 512KB · L3 8MB",bus:"AMBA AXI · CI-700 · LPDDR5",gpu:"Xclipse 920 RDNA2 · 4WGP · 572MHz",npu:"NPU 6세대 · 30TOPS",isp:"Imagiq 790 · 2.7GP/s"},
+   sd:{pipe:"4-wide · 10단계",cache:"L1 64KB · L2 1MB · SLC 3MB",bus:"LLCC · LPDDR5",gpu:"Adreno 730 · 818MHz",npu:"Hexagon 780 · 29TOPS",isp:"Spectra · 3.2GP/s"},
+   chg:["ARMv9.0-A 첫 세대 · SVE2 지원","Xclipse 920 AMD RDNA2 · 첫 AMD 모바일 GPU","HW 레이트레이싱 모바일 최초"]},
+  {l:"S23",c:"#3b9eff",exISA:"ARMv9.0-A — 취소",sdISA:"ARMv9.0-A",
+   ex:{pipe:"5-wide · 14단계 예상",cache:"L1-I 256KB · L3 12MB 예상",bus:"AMBA AXI · CI-710 · LPDDR5X",gpu:"Xclipse 930 RDNA2개선 예정",npu:"MX NPU ~40TOPS 예정",isp:"Imagiq 850 예정"},
+   sd:{pipe:"5-wide · 14단계",cache:"L1-I 96KB · L3 8MB · SLC 8MB",bus:"LLCC · LPDDR5X",gpu:"Adreno 740 · Vulkan 1.3",npu:"Hexagon 780 · 34TOPS",isp:"Spectra · 200MP"},
+   chg:["Quadra 취소 — 전 세계 SD 단일화","Cortex-X3 AArch32 완전 제거","Adreno 740 Vulkan 1.3 첫 탑재"]},
+  {l:"S24",c:"#9d6fff",exISA:"ARMv9.2-A",sdISA:"ARMv9.2-A",
+   ex:{pipe:"5-wide · 14단계+ · 10코어",cache:"L1-I 256KB(X4) · L2 1.5MB · L3 12MB",bus:"AMBA AXI · CI-710 · LPDDR5X",gpu:"Xclipse 940 RDNA3 · 6WGP · Mesh Shading",npu:"MX NPU · 50TOPS · 24K MAC · 2x↑",isp:"Imagiq 990 · 4센서 · 200MP"},
+   sd:{pipe:"5-wide · 14단계",cache:"L1-I 96KB · L2 1.5MB · SLC 8MB",bus:"LLCC 2세대 · LPDDR5X",gpu:"Adreno 750 · UE5 Nanite",npu:"Hexagon 780 · 45TOPS",isp:"Spectra · 4.3GP/s"},
+   chg:["ARMv9.2 MTE2 강화","데카코어 1+2+3+4 클러스터","RDNA3 Xclipse 940 Mesh Shading 첫 탑재"]},
+  {l:"S25",c:"#00e5cc",exISA:"ARMv9.2-A",sdISA:"ARMv8.7-A ★Oryon 커스텀",
+   ex:{pipe:"5-wide · 14~15단계",cache:"L1-I 256KB · L2 2MB · L3 16MB · SLC 4MB",bus:"AMBA AXI 5.0 · CI-720 · LPDDR5X",gpu:"Xclipse 950 RDNA3+ · 8WGP/16CU 2-engine",npu:"MX NPU 2세대 · 60TOPS · 32K MAC",isp:"Imagiq 1100+VPS · 4.0GP/s"},
+   sd:{pipe:"6-wide 추정 · 완전 커스텀 OoO",cache:"L1-I 192KB/128KB · L2 12MB×2(24MB) · L3없음 · SLC 8MB",bus:"LLCC · SLC 8MB 전체공유 · LPDDR5X",gpu:"Adreno 830 · 3슬라이스 · +40%",npu:"Hexagon Scalar8+Vector6 · 45TOPS",isp:"Spectra · RAW직접처리 · NPU직결 · 320MP"},
+   chg:["Oryon Gen2 L3 제거 → L2 12MB/클러스터","3-슬라이스 Adreno 830 모바일 최초","ISP RAW 도메인 처리 + NPU 직결"]},
+  {l:"S26 ★",c:"#00ff88",exISA:"ARMv9.3-A (ARM Lumex)",sdISA:"ARMv9.2-A (Oryon Gen3)",
+   ex:{pipe:"6-wide 추정 · 15단계+",cache:"L1-I 256KB · L2 2MB · L3 16MB",bus:"AMBA AXI 5.0 · CI-720 · LPDDR5X 10.7Gbps",gpu:"Xclipse 960 RDNA3+ · 8+WGP",npu:"MX NPU 3세대 · 80TOPS · PQC보안 · 가상화",isp:"VPS 2세대 · DVNR · APV · 320MP"},
+   sd:{pipe:"6-wide · HW매트릭스가속",cache:"L1-I 192KB · L2 12MB×2 · SLC 8MB",bus:"LLCC 3세대 · LPDDR5X",gpu:"Adreno 850 · GMEM 18MB · HW매트릭스",npu:"Hexagon Gen3 · HW매트릭스 최초 · +46%",isp:"Spectra · 트리플48MP 4K60fps"},
+   chg:["★ 코드네임 Miracle (M1/M2/M3)","세계 최초 2nm GAA · 전력 25~30%↓","ARMv9.3 ARM Lumex C1 코어","MX NPU 3세대 PQC 보안·가상화 최초"]},
+  {l:"S27",c:"#ffcc00",exISA:"ARMv9.x (ARM C2)",sdISA:"ARMv9.2+ (Oryon Gen3+)",
+   ex:{pipe:"6-wide+ · IPC+35%",cache:"L1-I 256KB+ · L2 2MB+ · L3 20MB",bus:"AMBA AXI · LPDDR6 14.4Gbps",gpu:"Xclipse 970 RDNA4 예상",npu:"MX NPU 4세대 ~100TOPS",isp:"VPS 3세대"},
+   sd:{pipe:"2+3+3 클러스터",cache:"L2 12MB/클러스터 · SM8975 LPDDR6",bus:"LLCC 4세대",gpu:"Adreno 845/850",npu:"Hexagon Gen3+",isp:"Spectra Gen4"},
+   chg:["SF2P 성능12%↑ · 전력25%↓","ARM C2 IPC +35%","LPDDR6 14.4Gbps 첫 탑재"]},
+];
+const atabs=document.getElementById('archTabs');
+const apanels=document.getElementById('archPanels');
+ARCH.forEach((a,ai)=>{
+  atabs.insertAdjacentHTML('beforeend',`<button class="at ${ai===0?'on':''}" id="at${ai}" onclick="swA(${ai})">${a.l}</button>`);
+  function rw(k,v,c){return v?`<div class="ar2" style="border-color:${c}22"><span class="ak2" style="color:${c}">${k}</span><span class="av2">${v}</span></div>`:''}
+  apanels.insertAdjacentHTML('beforeend',`<div class="apanel ${ai===0?'on':''}" id="ap${ai}">
+    <div style="background:var(--bg2);border:1px solid ${a.c}22;border-radius:8px;padding:10px;margin-bottom:8px">
+      <div style="display:flex;gap:16px;flex-wrap:wrap">
+        <div><div class="sl" style="color:${a.c};margin-bottom:3px">Exynos ISA</div><div style="font-size:14px;font-weight:800;color:${a.c}" class="neon">${a.exISA}</div></div>
+        <div><div class="sl" style="color:#ff9900;margin-bottom:3px">Snapdragon ISA</div><div style="font-size:14px;font-weight:800;color:#ff9900" class="neon">${a.sdISA}</div></div>
+      </div>
+    </div>
+    <div class="ag2">
+      <div class="ac2" style="border-color:${a.c}1e">
+        <div class="ac2h" style="background:${a.c}0f;border-bottom-color:${a.c}16;color:${a.c}">Exynos</div>
+        <div class="ac2b">${['Pipeline','Cache','Bus','GPU','NPU','ISP'].map((k,ki)=>rw(k,[a.ex.pipe,a.ex.cache,a.ex.bus,a.ex.gpu,a.ex.npu,a.ex.isp][ki],a.c)).join('')}</div>
+      </div>
+      <div class="ac2" style="border-color:#ff99001e">
+        <div class="ac2h" style="background:#ff99000f;border-bottom-color:#ff990016;color:#ff9900">Snapdragon</div>
+        <div class="ac2b">${['Pipeline','Cache','Bus','GPU','NPU','ISP'].map((k,ki)=>rw(k,[a.sd.pipe,a.sd.cache,a.sd.bus,a.sd.gpu,a.sd.npu,a.sd.isp][ki],'#ff9900')).join('')}</div>
+      </div>
+    </div>
+    <div class="chgbox"><strong>⚡ ${a.l} 변경점:</strong><br>${a.chg.map(c=>`▸ ${c}`).join('<br>')}</div>
+  </div>`);
+});
+function swA(i){
+  document.querySelectorAll('.apanel').forEach(p=>p.classList.remove('on'));
+  document.querySelectorAll('.at').forEach(b=>{b.classList.remove('on');b.style.borderColor='var(--bd)';b.style.color='var(--dim)';b.style.background='var(--bg2)'});
+  document.getElementById('ap'+i).classList.add('on');
+  const b=document.getElementById('at'+i);b.classList.add('on');
+  b.style.borderColor=ARCH[i].c;b.style.color='#dceef8';b.style.background='#0a1e2e';
+}
+
+// Oryon cards
+const ORY=[
+  {g:"Gen 1",n:"Oryon V1",yr:"2024 PC",c:"#ff6a00",ch:"SD X Elite",proc:"TSMC 4nm",isa:"ARMv8.7-A 커스텀",cores:"12코어 · 3클러스터",clk:"4.3GHz",cache:"L2 12MB/클러스터",slc:"없음",gpu:"Adreno 740",npu:"45TOPS",pf:[{v:"4.3",l:"GHz"},{v:"12",l:"코어"},{v:"36MB",l:"L2"},{v:"45",l:"TOPS"}]},
+  {g:"Gen 2",n:"Oryon V2",yr:"2024 모바일",c:"#ff9500",ch:"SD 8 Elite",proc:"TSMC 3nm",isa:"ARMv8.7-A 커스텀",cores:"2P(4.47G)+6E(3.53G)",clk:"4.47GHz",cache:"L2 24MB(12×2)",slc:"8MB SLC",gpu:"Adreno 830 · 3슬라이스",npu:"Scalar8+Vector6",pf:[{v:"+30%",l:"성능"},{v:"+57%",l:"효율"},{v:"24MB",l:"L2"},{v:"8MB",l:"SLC"}]},
+  {g:"Gen 3",n:"Oryon V3",yr:"2025 모바일+PC",c:"#ffb800",ch:"SD 8 Elite Gen5 · X2",proc:"TSMC 3nm N3P",isa:"ARMv9.2-A",cores:"2P(4.61G)+6E(3.63G)",clk:"4.61GHz",cache:"L2 24MB",slc:"8MB SLC",gpu:"Adreno 850 · GMEM 18MB",npu:"Gen3 · HW매트릭스 · +46%",pf:[{v:"+20%",l:"CPU"},{v:"+35%",l:"효율"},{v:"4.61",l:"GHz"},{v:"+46%",l:"NPU"}]},
+  {g:"Gen 3+",n:"SM8950/8975",yr:"2026~27 예정",c:"#ffe066",ch:"SM8950 / SM8975 Pro",proc:"TSMC 2nm N2/N2P",isa:"ARMv9.2+ 예상",cores:"2+3+3 3클러스터",clk:"4.6GHz+ 예상",cache:"L2 12MB/클러스터",slc:"8MB+ SLC",gpu:"Adreno 845/850",npu:"Gen3+ · LPDDR6활용",pf:[{v:"2nm",l:"공정"},{v:"2+3+3",l:"구성"},{v:"LPDDR6",l:"Pro"},{v:"2027",l:"목표"}]},
+];
+const oc=document.getElementById('oryCards');
+ORY.forEach(o=>{
+  oc.insertAdjacentHTML('beforeend',`<div class="oc" style="border-color:${o.c}">
+    <div class="och" style="background:${o.c}0c;border-bottom:1px solid ${o.c}18">
+      <div style="font-size:8px;letter-spacing:3px;font-weight:700;color:${o.c}">ORYON ${o.g}</div>
+      <div style="font-family:'Bebas Neue',sans-serif;font-size:14px;letter-spacing:2px;color:${o.c}" class="neon">${o.n}</div>
+      <div style="font-size:7px;color:#605a50">${o.ch}</div>
+    </div>
+    <div class="ocb">
+      ${[['공정',o.proc],['ISA',o.isa],['코어',o.cores],['클럭',o.clk],['캐시',o.cache+' · SLC '+o.slc],['GPU',o.gpu],['NPU',o.npu]].map(([k,v])=>`<div class="ar"><span class="ak" style="color:${o.c}">${k}</span><span class="av">${v}</span></div>`).join('')}
+      <div class="ocpf">${o.pf.map(p=>`<div class="pfi" style="border-color:${o.c}18"><div class="pfv neon" style="color:${o.c}">${p.v}</div><div class="pfl">${p.l}</div></div>`).join('')}</div>
+    </div>
+  </div>`);
+});
+const SDD=[
+  {yr:"2022",c:"SD 8 Gen 1",m:"SM8450",n:"4nm",cpu:"X2+A710+A510",isa:"ARMv9.0",gpu:"Adreno 730",ory:"Cortex",ph:"S22 미국",col:"#bf5fff"},
+  {yr:"2023",c:"SD 8 Gen 2 Galaxy",m:"SM8550",n:"4nm",cpu:"X3+A715+A710+A510",isa:"ARMv9.0",gpu:"Adreno 740",ory:"Cortex",ph:"S23 전 세계",col:"#3b9eff"},
+  {yr:"2024",c:"SD 8 Gen 3 Galaxy",m:"SM8650",n:"4nm",cpu:"X4+A720×5+A520",isa:"ARMv9.2",gpu:"Adreno 750",ory:"Cortex",ph:"S24 미국·Ultra",col:"#9d6fff"},
+  {yr:"2024",c:"SD 8 Elite Galaxy",m:"SM8750",n:"3nm",cpu:"Oryon G2 2P+6E",isa:"ARMv8.7★",gpu:"Adreno 830",ory:"Oryon Gen2",ph:"S25 전 세계",col:"#00e5cc"},
+  {yr:"2025",c:"SD 8 Elite Gen 5",m:"SM8850",n:"3nm N3P",cpu:"Oryon G3 2P+6E",isa:"ARMv9.2",gpu:"Adreno 850",ory:"Oryon Gen3",ph:"S26(Miracle)",col:"#00ff88"},
+  {yr:"2025",c:"SD 8 Gen 5",m:"SM8845",n:"3nm",cpu:"Oryon G3 저클럭",isa:"ARMv9.2",gpu:"Adreno 840",ory:"Gen3 하향",ph:"보급형",col:"#66cc44"},
+  {yr:"2026~",c:"SD 8 Elite Gen 6",m:"SM8950",n:"2nm N2",cpu:"2+3+3 Oryon",isa:"ARMv9.2+",gpu:"Adreno 845",ory:"Gen3+",ph:"S27 예상",col:"#ffcc00"},
+  {yr:"2026~",c:"SD 8 Elite Gen 6 Pro",m:"SM8975",n:"2nm N2P",cpu:"2+3+3 Oryon 고클럭",isa:"ARMv9.2+",gpu:"Adreno 850",ory:"Gen3+ Pro",ph:"S27 Ultra",col:"#ff8800"},
+];
+const sdt=document.getElementById('sdTable');
+sdt.insertAdjacentHTML('beforeend',`<thead><tr><th>연도</th><th>칩셋</th><th>모델</th><th>공정</th><th>CPU</th><th>ISA</th><th>GPU</th><th>Oryon</th><th>Galaxy</th></tr></thead><tbody>${SDD.map(r=>`<tr><td><span class="bdg" style="color:${r.col};background:${r.col}10;border:1px solid ${r.col}25">${r.yr}</span></td><td style="color:${r.col};font-weight:700">${r.c}</td><td style="color:#3a5a6a">${r.m}</td><td><span class="bdg" style="color:#70a0c0;background:#0a1a28;border:1px solid #0e2030">${r.n}</span></td><td style="color:#8aaab8">${r.cpu}</td><td><span class="bdg" style="color:${r.isa.includes('8.7')?'#ffe066':'#8890c0'};background:${r.isa.includes('8.7')?'#ffe06610':'#8890c00d'};border:1px solid ${r.isa.includes('8.7')?'#ffe06625':'#8890c020'}">${r.isa}</span></td><td style="color:#b880e8">${r.gpu}</td><td><span class="bdg" style="color:${r.ory.includes('Oryon')?'#ffcc00':'#445566'};background:${r.ory.includes('Oryon')?'#ffcc000d':'#1a2a30'};border:1px solid ${r.ory.includes('Oryon')?'#ffcc0025':'#2a3a40'}">${r.ory}</span></td><td style="color:#4a6070">${r.ph}</td></tr>`).join('')}</tbody>`);
+
+// Tab switching
+const TABS=['lineage','arch','oryon'];
+function sw(t,el){
+  document.querySelectorAll('.sec').forEach(s=>s.classList.remove('on'));
+  document.querySelectorAll('.tb,.bntb').forEach(b=>b.classList.remove('on'));
+  document.getElementById('tab-'+t).classList.add('on');
+  if(el) el.classList.add('on');
+}
+function swMob(t,idx){
+  sw(t);
+  document.querySelectorAll('.bntb')[idx].classList.add('on');
+}
+</script>
+</body>
+</html>

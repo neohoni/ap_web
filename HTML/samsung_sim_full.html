@@ -1,0 +1,1195 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Samsung Galaxy 전체 시뮬레이션 에이전트</title>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500;700&family=Barlow+Condensed:wght@300;400;600;700;800;900&display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box;margin:0;padding:0;-webkit-font-smoothing:antialiased}
+:root{
+  --bg:#040608;--bg2:#080c10;--bg3:#0d1218;--bg4:#121920;--bg5:#18212a;
+  --bdr:#1a2530;--bdr2:#243040;--bdr3:#2e3f52;--bdr4:#3a5068;
+  --txt:#c8d8e8;--txt2:#6888a8;--txt3:#384858;
+  --S:#00d4ff;--ZF:#7c6af8;--ZP:#f050a0;--A:#30e090;--M:#f0a020;--F:#f06040;--X:#80c860;--T:#48c8f8;
+  --hit:#00ff88;
+  --r:4px;
+}
+body{background:var(--bg);color:var(--txt);font-family:'JetBrains Mono',monospace;height:100vh;display:flex;flex-direction:column;overflow:hidden}
+
+/* ─ scrollbar ─ */
+::-webkit-scrollbar{width:3px;height:3px}
+::-webkit-scrollbar-track{background:transparent}
+::-webkit-scrollbar-thumb{background:var(--bdr4);border-radius:1px}
+
+/* ─ HEADER ─ */
+.hd{display:flex;align-items:center;gap:1rem;padding:.55rem 1.2rem;border-bottom:1px solid var(--bdr);flex-shrink:0;background:var(--bg2)}
+.hd-logo{font-family:'Barlow Condensed',sans-serif;font-weight:900;font-size:18px;letter-spacing:2px;color:#fff;display:flex;align-items:center;gap:.6rem}
+.hd-logo .dot{width:8px;height:8px;background:var(--hit);border-radius:50%;animation:pulse 2s infinite}
+@keyframes pulse{0%,100%{opacity:1;box-shadow:0 0 0 0 rgba(0,255,136,.5)}50%{opacity:.7;box-shadow:0 0 0 5px rgba(0,255,136,0)}}
+.hd-sep{width:1px;height:20px;background:var(--bdr2)}
+.hd-stat{font-size:10px;color:var(--txt3);letter-spacing:1px}
+.hd-stat span{color:var(--hit);margin-left:4px}
+.hd-badge{margin-left:auto;font-size:9px;padding:2px 8px;border:1px solid var(--bdr3);border-radius:2px;color:var(--txt2);letter-spacing:1px;text-transform:uppercase}
+.hd-badge.mod{border-color:rgba(0,255,136,.4);color:var(--hit);background:rgba(0,255,136,.05);display:none}
+
+/* ─ SERIES BAR ─ */
+.sb{display:flex;gap:2px;padding:.4rem 1.2rem;border-bottom:1px solid var(--bdr);background:var(--bg2);overflow-x:auto;flex-shrink:0}
+.sb::-webkit-scrollbar{height:0}
+.stab{display:flex;align-items:center;gap:.45rem;padding:.35rem .85rem;border:1px solid var(--bdr2);background:transparent;color:var(--txt2);font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:13px;letter-spacing:1.5px;cursor:pointer;transition:all .15s;white-space:nowrap;border-radius:2px}
+.stab .col-dot{width:6px;height:6px;border-radius:50%;flex-shrink:0}
+.stab:hover{border-color:var(--bdr3);color:var(--txt)}
+.stab.act{color:#fff;border-color:transparent}
+.stab .cnt{font-size:9px;opacity:.55;font-weight:400;font-family:'JetBrains Mono',monospace}
+
+/* ─ MODEL ROW ─ */
+.mr{padding:.4rem 1.2rem;border-bottom:1px solid var(--bdr);background:var(--bg);overflow-x:auto;flex-shrink:0;display:flex;align-items:center;gap:.3rem}
+.mr::-webkit-scrollbar{height:0}
+.mbtn{padding:.3rem .7rem;border:1px solid var(--bdr);background:transparent;color:var(--txt3);font-family:'JetBrains Mono',monospace;font-size:10px;cursor:pointer;transition:all .15s;border-radius:2px;white-space:nowrap;display:flex;align-items:center;gap:.35rem;flex-shrink:0}
+.mbtn:hover{border-color:var(--bdr3);color:var(--txt2)}
+.mbtn.act{border-color:transparent;color:#fff;font-weight:700}
+.mbtn .yr{font-size:8px;opacity:.5}
+.mbtn .st{font-size:7px;padding:1px 4px;border-radius:1px;font-weight:500;letter-spacing:.5px}
+.st-c{background:rgba(48,224,144,.12);color:#30e090}
+.st-r{background:rgba(0,212,255,.12);color:var(--S)}
+.st-u{background:rgba(124,106,248,.12);color:var(--ZF)}
+.st-f{background:rgba(240,80,160,.15);color:var(--ZP)}
+.mr-sep{width:1px;height:20px;background:var(--bdr);flex-shrink:0;margin:0 .1rem}
+
+/* VARIANT btns */
+.vrow{display:flex;gap:2px;padding:.35rem 1.2rem;border-bottom:1px solid var(--bdr);background:var(--bg2);flex-shrink:0;overflow-x:auto}
+.vrow::-webkit-scrollbar{height:0}
+.vbtn{padding:.25rem .6rem;border:1px solid var(--bdr);background:transparent;color:var(--txt3);font-size:9px;font-family:'JetBrains Mono',monospace;cursor:pointer;transition:all .15s;border-radius:2px;letter-spacing:.5px;white-space:nowrap}
+.vbtn:hover{border-color:var(--bdr3);color:var(--txt2)}
+.vbtn.act{color:#fff;border-color:transparent}
+
+/* ─ MAIN LAYOUT ─ */
+.main{display:grid;grid-template-columns:280px 1fr;flex:1;overflow:hidden;min-height:0}
+
+/* ─ LEFT ─ */
+.lp{border-right:1px solid var(--bdr);display:flex;flex-direction:column;overflow:hidden}
+.lp-inner{overflow-y:auto;flex:1;padding:1rem}
+
+/* Score block */
+.score-blk{display:flex;align-items:center;gap:.75rem;padding:.75rem;background:var(--bg3);border:1px solid var(--bdr2);border-radius:var(--r);margin-bottom:.75rem}
+.sc-ring{position:relative;width:54px;height:54px;flex-shrink:0}
+.sc-ring svg{transform:rotate(-90deg)}
+.sc-num{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-family:'Barlow Condensed',sans-serif;font-weight:900;font-size:20px}
+.sc-info .lbl{font-size:8px;color:var(--txt3);letter-spacing:2px;text-transform:uppercase;margin-bottom:.2rem}
+.sc-info .grade{font-family:'Barlow Condensed',sans-serif;font-weight:900;font-size:24px;line-height:1}
+.sc-info .desc{font-size:9px;color:var(--txt2);margin-top:.15rem}
+
+/* phone widget */
+.ph-widget{display:flex;align-items:center;gap:.7rem;padding:.65rem .75rem;background:var(--bg3);border:1px solid var(--bdr2);border-radius:var(--r);margin-bottom:.75rem}
+.ph-icon{width:44px;height:82px;border-radius:9px;border:1.5px solid var(--bdr2);display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0;position:relative;background:var(--bg4);transition:border-color .3s}
+.ph-icon::after{content:'';position:absolute;bottom:5px;left:50%;transform:translateX(-50%);width:18px;height:2px;border-radius:1px;background:var(--bdr3)}
+.ph-meta{flex:1;min-width:0}
+.ph-name{font-family:'Barlow Condensed',sans-serif;font-weight:800;font-size:15px;letter-spacing:1px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.ph-cat{font-size:9px;color:var(--txt2);letter-spacing:1px;margin:.1rem 0}
+.ph-status{font-size:9px;color:var(--txt3);letter-spacing:.5px}
+
+/* params */
+.p-hdr{display:flex;align-items:center;justify-content:space-between;margin-bottom:.5rem}
+.p-hdr-lbl{font-size:9px;color:var(--txt3);letter-spacing:2px;text-transform:uppercase}
+.p-hdr-btns{display:flex;gap:.3rem}
+.sm-btn{font-size:9px;padding:2px 7px;border:1px solid var(--bdr2);background:transparent;color:var(--txt2);cursor:pointer;font-family:'JetBrains Mono',monospace;border-radius:1px;transition:all .15s;letter-spacing:.5px}
+.sm-btn:hover{border-color:var(--bdr3);color:var(--txt)}
+.sm-btn.future-btn{border-color:rgba(124,106,248,.35);color:var(--ZF);background:rgba(124,106,248,.06);display:none}
+.sm-btn.future-btn:hover{background:rgba(124,106,248,.12)}
+
+.cat-sep{font-size:8px;color:var(--txt3);letter-spacing:2px;text-transform:uppercase;padding:.5rem 0 .3rem;display:flex;align-items:center;gap:.5rem}
+.cat-sep::after{content:'';flex:1;height:1px;background:var(--bdr)}
+.pr{margin-bottom:.65rem}
+.pr-row{display:flex;align-items:center;justify-content:space-between;margin-bottom:.25rem}
+.pr-label{font-size:10px;color:var(--txt2);display:flex;align-items:center;gap:.35rem}
+.pr-tag{font-size:7px;padding:1px 4px;border-radius:1px;font-weight:700;letter-spacing:.5px;display:none;background:rgba(0,255,136,.1);color:var(--hit);border:1px solid rgba(0,255,136,.25)}
+.pr-tag.show{display:inline-block}
+.pr-inp-wrap{display:flex;align-items:center;gap:.3rem}
+.pr-num{width:50px;background:var(--bg4);border:1px solid var(--bdr2);color:var(--txt);font-family:'JetBrains Mono',monospace;font-weight:700;font-size:11px;text-align:right;padding:2px 5px;outline:none;border-radius:1px;transition:border-color .15s}
+.pr-num:focus{border-color:var(--hit)}
+.pr-unit{font-size:9px;color:var(--txt3);min-width:24px}
+.pr-sl{width:100%;-webkit-appearance:none;appearance:none;height:3px;border-radius:1px;background:var(--bg5);outline:none;cursor:pointer}
+.pr-sl::-webkit-slider-thumb{-webkit-appearance:none;width:10px;height:10px;border-radius:50%;background:var(--ac,#00d4ff);cursor:pointer;border:1.5px solid var(--bg)}
+.pr-sl::-moz-range-thumb{width:10px;height:10px;border-radius:50%;background:var(--ac,#00d4ff);cursor:pointer;border:1.5px solid var(--bg)}
+
+.sim-btn{width:100%;margin-top:.6rem;padding:.6rem;background:transparent;border:1px solid var(--ac,#00d4ff);color:var(--ac,#00d4ff);font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:14px;letter-spacing:2px;cursor:pointer;transition:all .2s;border-radius:2px}
+.sim-btn:hover{background:rgba(0,212,255,.08)}
+.sim-btn:active{transform:scaleY(.97)}
+
+/* ─ RIGHT ─ */
+.rp{display:flex;flex-direction:column;overflow:hidden}
+.rp-grid{flex:1;overflow-y:auto;display:grid;grid-template-columns:1fr 1fr;gap:.75rem;padding:.85rem;align-content:start}
+.card{background:var(--bg2);border:1px solid var(--bdr);border-radius:var(--r);padding:.85rem}
+.card-full{grid-column:1/-1}
+.card h4{font-size:8px;color:var(--txt3);letter-spacing:2.5px;text-transform:uppercase;margin-bottom:.7rem;display:flex;align-items:center;gap:.5rem}
+.card h4::after{content:'';flex:1;height:1px;background:var(--bdr)}
+
+/* bars */
+.bgrp{display:flex;flex-direction:column;gap:.45rem}
+.brow{display:flex;align-items:center;gap:.5rem}
+.bkey{font-size:9px;color:var(--txt2);width:48px;text-align:right;flex-shrink:0;letter-spacing:.3px}
+.btrack{flex:1;height:3px;background:var(--bg5);position:relative;border-radius:1px;overflow:visible}
+.borig{position:absolute;top:0;left:0;height:100%;border-radius:1px;border:1px solid var(--bdr3);transition:width .4s}
+.bfill{position:absolute;top:0;left:0;height:100%;border-radius:1px;transition:width .5s cubic-bezier(.34,1.56,.64,1)}
+.bnum{font-size:9px;color:var(--txt2);width:28px;font-weight:700}
+.bdelta{font-size:8px;width:26px;text-align:right;font-weight:700}
+.dup{color:var(--hit)}.ddn{color:#f06060}.deq{color:var(--txt3)}
+
+/* diff table */
+.dtbl{width:100%;border-collapse:collapse;font-size:10px}
+.dtbl th{color:var(--txt3);padding:.25rem .35rem;border-bottom:1px solid var(--bdr);text-align:left;font-size:8px;letter-spacing:1.5px;text-transform:uppercase;font-weight:400}
+.dtbl td{padding:.25rem .35rem;border-bottom:1px solid var(--bdr)}
+.dtbl tr:last-child td{border:none}
+.dtbl tr.chg td:first-child{border-left:2px solid rgba(0,255,136,.4)}
+.dorig{color:var(--txt3)}.dcur{color:var(--txt);font-weight:700}
+.dup2{color:var(--hit);font-weight:700}.ddn2{color:#f06060;font-weight:700}
+
+/* spec grid */
+.sgrid{display:grid;grid-template-columns:1fr 1fr;gap:.4rem}
+.sc{background:var(--bg3);border:1px solid var(--bdr);border-radius:var(--r);padding:.5rem .6rem}
+.sc-l{font-size:8px;color:var(--txt3);margin-bottom:.15rem;letter-spacing:1px;text-transform:uppercase}
+.sc-v{font-size:10px;color:var(--txt);font-weight:500;line-height:1.4}
+.sc-n{font-size:7px;background:rgba(0,212,255,.12);color:var(--S);padding:0 4px;border-radius:1px;margin-left:3px;font-weight:700;border:1px solid rgba(0,212,255,.2)}
+
+/* evo */
+.evo-item{display:flex;gap:.4rem;padding:.35rem 0;border-bottom:1px solid var(--bdr);font-size:10px;color:var(--txt2);line-height:1.5}
+.evo-item:last-child{border:none}
+.evo-dot{width:3px;height:3px;border-radius:50%;flex-shrink:0;margin-top:.45rem}
+
+/* future panel */
+.future-panel{background:linear-gradient(135deg,rgba(124,106,248,.04),rgba(240,80,160,.04));border:1px solid rgba(124,106,248,.2);border-radius:var(--r);padding:.85rem;display:none}
+.future-panel h4{color:var(--ZF)}
+.fp-actions{display:flex;gap:.4rem;flex-wrap:wrap;margin-top:.6rem}
+.fp-btn{font-size:10px;padding:.3rem .65rem;border:1px solid rgba(124,106,248,.3);background:rgba(124,106,248,.07);color:var(--ZF);cursor:pointer;font-family:'JetBrains Mono',monospace;transition:all .2s;border-radius:2px}
+.fp-btn:hover{background:rgba(124,106,248,.14)}
+.fp-btn:disabled{opacity:.35;cursor:not-allowed}
+.fp-result{margin-top:.65rem;padding:.6rem;background:var(--bg3);border:1px solid var(--bdr2);border-radius:var(--r);font-size:10px;color:var(--txt2);line-height:1.6;display:none}
+
+/* sim result */
+.sim-card{background:linear-gradient(135deg,rgba(0,212,255,.03),rgba(0,255,136,.03));border:1px solid rgba(0,212,255,.15);border-radius:var(--r);padding:.85rem;display:none}
+.sim-body{font-size:10px;color:var(--txt2);line-height:1.7}
+
+/* ─ CHAT ─ */
+.chat{border-top:1px solid var(--bdr);display:flex;flex-direction:column;height:220px;flex-shrink:0;background:var(--bg)}
+.chat-hd{display:flex;align-items:center;gap:.5rem;padding:.5rem 1rem;border-bottom:1px solid var(--bdr);flex-shrink:0}
+.chat-title{font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:13px;letter-spacing:1.5px;color:var(--txt)}
+.aibadge{font-size:8px;background:linear-gradient(90deg,var(--S),var(--ZF));color:#fff;padding:2px 6px;border-radius:1px;font-weight:700;letter-spacing:1px}
+.ctx-tag{margin-left:auto;font-size:9px;padding:2px 6px;border:1px solid var(--bdr2);color:var(--txt2);border-radius:1px;letter-spacing:.5px}
+.chat-msgs{flex:1;overflow-y:auto;padding:.6rem 1rem;display:flex;flex-direction:column;gap:.4rem}
+.msg{padding:.5rem .7rem;font-size:10px;line-height:1.65;max-width:86%;border-radius:2px}
+.mu{background:rgba(0,212,255,.07);border:1px solid rgba(0,212,255,.18);align-self:flex-end;color:var(--txt)}
+.ma{background:var(--bg3);border:1px solid var(--bdr);align-self:flex-start;color:var(--txt2)}
+.chat-ft{padding:.5rem 1rem;border-top:1px solid var(--bdr);display:flex;flex-direction:column;gap:.3rem;flex-shrink:0}
+.qrow{display:flex;gap:.3rem;flex-wrap:wrap}
+.qb{font-size:9px;padding:.2rem .5rem;background:transparent;border:1px solid var(--bdr2);color:var(--txt2);cursor:pointer;font-family:'JetBrains Mono',monospace;transition:all .15s;border-radius:2px;white-space:nowrap}
+.qb:hover{border-color:var(--bdr3);color:var(--txt)}
+.crow{display:flex;gap:.4rem}
+.cin{flex:1;background:var(--bg3);border:1px solid var(--bdr2);color:var(--txt);font-family:'JetBrains Mono',monospace;font-size:10px;padding:.4rem .6rem;outline:none;border-radius:2px;transition:border-color .15s}
+.cin:focus{border-color:var(--S)}
+.cin::placeholder{color:var(--txt3)}
+.sbtn{padding:.4rem .85rem;background:transparent;border:1px solid var(--S);color:var(--S);font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:12px;letter-spacing:1.5px;cursor:pointer;transition:all .2s;border-radius:2px}
+.sbtn:hover{background:rgba(0,212,255,.08)}
+.sbtn:disabled{opacity:.3;cursor:not-allowed}
+.ldots span{animation:ld .7s infinite;display:inline-block;font-size:14px}
+.ldots span:nth-child(2){animation-delay:.18s}
+.ldots span:nth-child(3){animation-delay:.36s}
+@keyframes ld{0%,80%,100%{opacity:.2;transform:translateY(0)}40%{opacity:1;transform:translateY(-2px)}}
+@keyframes fin{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:translateY(0)}}
+.fin{animation:fin .25s ease forwards}
+@media(max-width:900px){.main{grid-template-columns:1fr}.lp{display:none}}
+</style>
+</head>
+<body>
+
+<!-- HEADER -->
+<div class="hd">
+  <div class="hd-logo"><div class="dot"></div>SAMSUNG GALAXY SIM</div>
+  <div class="hd-sep"></div>
+  <div class="hd-stat">시리즈<span id="hdSeries">—</span></div>
+  <div class="hd-sep"></div>
+  <div class="hd-stat">모델<span id="hdModel">—</span></div>
+  <div class="hd-sep"></div>
+  <div class="hd-stat">점수<span id="hdScore">—</span></div>
+  <div class="hd-badge mod" id="modBadge">● MODIFIED</div>
+  <div class="hd-badge" id="hdYear">—</div>
+</div>
+
+<!-- SERIES BAR -->
+<div class="sb" id="seriesBar"></div>
+
+<!-- MODEL ROW -->
+<div class="mr" id="modelRow"></div>
+
+<!-- VARIANT ROW -->
+<div class="vrow" id="variantRow" style="display:none"></div>
+
+<!-- MAIN -->
+<div class="main">
+
+  <!-- LEFT -->
+  <div class="lp">
+    <div class="lp-inner">
+
+      <!-- Score -->
+      <div class="score-blk">
+        <div class="sc-ring">
+          <svg width="54" height="54" viewBox="0 0 54 54">
+            <circle cx="27" cy="27" r="22" fill="none" stroke="#1a2530" stroke-width="4"/>
+            <circle cx="27" cy="27" r="22" fill="none" stroke="url(#sg)" stroke-width="4"
+              stroke-linecap="square" stroke-dasharray="138.2" id="sc-circle" stroke-dashoffset="138.2"/>
+            <defs>
+              <linearGradient id="sg" x1="0%" y1="0%" x2="100%" y2="0%">
+                <stop offset="0%" stop-color="#00d4ff" id="sg1"/>
+                <stop offset="100%" stop-color="#00ff88" id="sg2"/>
+              </linearGradient>
+            </defs>
+          </svg>
+          <div class="sc-num" id="scNum">—</div>
+        </div>
+        <div class="sc-info">
+          <div class="lbl">OVERALL SCORE</div>
+          <div class="grade" id="scGrade">—</div>
+          <div class="desc" id="scDesc">모델을 선택하세요</div>
+        </div>
+      </div>
+
+      <!-- Phone widget -->
+      <div class="ph-widget">
+        <div class="ph-icon" id="phIcon"><span id="phEmoji">📱</span></div>
+        <div class="ph-meta">
+          <div class="ph-name" id="phName">Galaxy —</div>
+          <div class="ph-cat" id="phCat">—</div>
+          <div class="ph-status" id="phSt">—</div>
+        </div>
+      </div>
+
+      <!-- Params -->
+      <div class="p-hdr">
+        <span class="p-hdr-lbl">PARAMETERS</span>
+        <div class="p-hdr-btns">
+          <button class="sm-btn future-btn" id="futureBtn" onclick="runAIPredict()">▲ AI 예측</button>
+          <button class="sm-btn" onclick="applyLinear()">≈ 선형</button>
+          <button class="sm-btn" onclick="resetP()">↺ 리셋</button>
+        </div>
+      </div>
+      <div id="paramWrap"></div>
+      <button class="sim-btn" id="simBtn" onclick="runSim()">▶ SIMULATE</button>
+
+    </div>
+  </div>
+
+  <!-- RIGHT -->
+  <div class="rp">
+    <div class="rp-grid" id="rpGrid">
+      <div class="card">
+        <h4>PERFORMANCE INDEX</h4>
+        <div class="bgrp" id="barGrp"></div>
+      </div>
+      <div class="card">
+        <h4>PARAM DELTA</h4>
+        <table class="dtbl"><thead><tr><th>항목</th><th>원본</th><th>현재</th><th>Δ</th></tr></thead>
+          <tbody id="diffBody"></tbody></table>
+      </div>
+      <div class="card">
+        <h4>SPECIFICATIONS</h4>
+        <div class="sgrid" id="specGrid"></div>
+      </div>
+      <div class="card">
+        <h4>EVOLUTION POINTS</h4>
+        <div id="evoList"></div>
+      </div>
+      <div class="future-panel card-full" id="futurePanel">
+        <h4>◈ FUTURE / PREDICTION MODEL</h4>
+        <p style="font-size:10px;color:var(--txt2);line-height:1.6" id="fpDesc">미래 예측 모델입니다.</p>
+        <div class="fp-actions">
+          <button class="fp-btn" onclick="runAIPredict()" id="aiPredBtn">✦ AI 트렌드 자동 예측</button>
+          <button class="fp-btn" onclick="applyLinear()">📈 선형 트렌드 적용</button>
+          <button class="fp-btn" onclick="savePred()">💾 예측값 저장</button>
+        </div>
+        <div class="fp-result" id="fpResult"></div>
+      </div>
+      <div class="sim-card card-full" id="simCard">
+        <h4>SIMULATION ANALYSIS</h4>
+        <div class="sim-body" id="simBody"></div>
+      </div>
+    </div>
+
+    <!-- CHAT -->
+    <div class="chat">
+      <div class="chat-hd">
+        <span class="chat-title">AI AGENT</span>
+        <span class="aibadge">CLAUDE</span>
+        <span class="ctx-tag" id="ctxTag">—</span>
+      </div>
+      <div class="chat-msgs" id="chatMsgs">
+        <div class="msg ma">Samsung Galaxy 전체 라인업 시뮬레이션 에이전트입니다. S · Z Fold · Z Flip · A · M · F · XCover · Tab 시리즈를 선택하고 파라미터를 조정하거나 질문하세요.</div>
+      </div>
+      <div class="chat-ft">
+        <div class="qrow" id="qrow"></div>
+        <div class="crow">
+          <input class="cin" id="cin" placeholder="예: S25 Ultra와 Z Fold 7의 카메라 비교" onkeydown="if(e.key==='Enter'||event.key==='Enter')sendChat()"/>
+          <button class="sbtn" id="sbtn" onclick="sendChat()">SEND</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+/* ═══════════════════════════════════════
+   PARAMETER SETS
+═══════════════════════════════════════ */
+const P = {
+  flagship:[
+    {k:'cpu',n:'CPU',u:'점',min:40,max:100,step:1,cat:'성능'},
+    {k:'gpu',n:'GPU',u:'점',min:40,max:100,step:1,cat:'성능'},
+    {k:'ai',n:'AI NPU',u:'점',min:20,max:100,step:1,cat:'성능'},
+    {k:'cam',n:'카메라',u:'MP',min:12,max:200,step:1,cat:'카메라'},
+    {k:'zoom',n:'망원',u:'x',min:2,max:15,step:0.5,cat:'카메라'},
+    {k:'bat',n:'배터리',u:'mAh',min:3000,max:6000,step:50,cat:'배터리'},
+    {k:'chg',n:'유선충전',u:'W',min:15,max:100,step:5,cat:'배터리'},
+    {k:'ram',n:'RAM',u:'GB',min:8,max:24,step:2,cat:'SoC'},
+    {k:'disp',n:'디스플레이',u:'점',min:60,max:100,step:1,cat:'디스플레이'},
+    {k:'price',n:'가격',u:'만원',min:80,max:300,step:5,cat:'가격'},
+  ],
+  fold:[
+    {k:'cpu',n:'CPU',u:'점',min:50,max:100,step:1,cat:'성능'},
+    {k:'gpu',n:'GPU',u:'점',min:50,max:100,step:1,cat:'성능'},
+    {k:'ai',n:'AI NPU',u:'점',min:30,max:100,step:1,cat:'성능'},
+    {k:'cam',n:'카메라',u:'MP',min:12,max:200,step:1,cat:'카메라'},
+    {k:'zoom',n:'망원',u:'x',min:2,max:10,step:0.5,cat:'카메라'},
+    {k:'bat',n:'배터리',u:'mAh',min:3500,max:6500,step:50,cat:'배터리'},
+    {k:'chg',n:'유선충전',u:'W',min:15,max:100,step:5,cat:'배터리'},
+    {k:'ram',n:'RAM',u:'GB',min:8,max:32,step:2,cat:'SoC'},
+    {k:'inner',n:'내부화면',u:'인치×10',min:72,max:90,step:1,cat:'폼팩터'},
+    {k:'price',n:'가격',u:'만원',min:150,max:400,step:5,cat:'가격'},
+  ],
+  flip:[
+    {k:'cpu',n:'CPU',u:'점',min:40,max:100,step:1,cat:'성능'},
+    {k:'gpu',n:'GPU',u:'점',min:40,max:100,step:1,cat:'성능'},
+    {k:'ai',n:'AI NPU',u:'점',min:20,max:100,step:1,cat:'성능'},
+    {k:'cam',n:'카메라',u:'MP',min:12,max:100,step:1,cat:'카메라'},
+    {k:'cover',n:'커버화면',u:'인치×10',min:15,max:50,step:1,cat:'폼팩터'},
+    {k:'bat',n:'배터리',u:'mAh',min:2500,max:5500,step:50,cat:'배터리'},
+    {k:'chg',n:'유선충전',u:'W',min:15,max:65,step:5,cat:'배터리'},
+    {k:'ram',n:'RAM',u:'GB',min:6,max:16,step:2,cat:'SoC'},
+    {k:'thick',n:'접힌두께',u:'mm',min:5,max:18,step:0.5,cat:'폼팩터'},
+    {k:'price',n:'가격',u:'만원',min:80,max:200,step:5,cat:'가격'},
+  ],
+  mid:[
+    {k:'cpu',n:'CPU',u:'점',min:20,max:80,step:1,cat:'성능'},
+    {k:'gpu',n:'GPU',u:'점',min:20,max:75,step:1,cat:'성능'},
+    {k:'ai',n:'AI',u:'점',min:10,max:70,step:1,cat:'성능'},
+    {k:'cam',n:'카메라',u:'MP',min:32,max:200,step:1,cat:'카메라'},
+    {k:'zoom',n:'광학줌',u:'x',min:2,max:5,step:0.5,cat:'카메라'},
+    {k:'bat',n:'배터리',u:'mAh',min:4000,max:7000,step:50,cat:'배터리'},
+    {k:'chg',n:'충전',u:'W',min:15,max:65,step:5,cat:'배터리'},
+    {k:'ram',n:'RAM',u:'GB',min:4,max:12,step:2,cat:'SoC'},
+    {k:'disp',n:'디스플레이',u:'점',min:45,max:88,step:1,cat:'디스플레이'},
+    {k:'price',n:'가격',u:'만원',min:20,max:90,step:2,cat:'가격'},
+  ],
+  budget:[
+    {k:'cpu',n:'CPU',u:'점',min:15,max:55,step:1,cat:'성능'},
+    {k:'gpu',n:'GPU',u:'점',min:15,max:50,step:1,cat:'성능'},
+    {k:'ai',n:'AI',u:'점',min:5,max:45,step:1,cat:'성능'},
+    {k:'cam',n:'카메라',u:'MP',min:13,max:108,step:1,cat:'카메라'},
+    {k:'bat',n:'배터리',u:'mAh',min:4000,max:7000,step:50,cat:'배터리'},
+    {k:'chg',n:'충전',u:'W',min:10,max:45,step:5,cat:'배터리'},
+    {k:'ram',n:'RAM',u:'GB',min:3,max:8,step:1,cat:'SoC'},
+    {k:'disp',n:'디스플레이',u:'점',min:35,max:75,step:1,cat:'디스플레이'},
+    {k:'price',n:'가격',u:'만원',min:15,max:45,step:1,cat:'가격'},
+  ],
+  rugged:[
+    {k:'cpu',n:'CPU',u:'점',min:40,max:85,step:1,cat:'성능'},
+    {k:'gpu',n:'GPU',u:'점',min:35,max:80,step:1,cat:'성능'},
+    {k:'ai',n:'AI',u:'점',min:20,max:75,step:1,cat:'성능'},
+    {k:'cam',n:'카메라',u:'MP',min:13,max:108,step:1,cat:'카메라'},
+    {k:'bat',n:'배터리',u:'mAh',min:4000,max:7000,step:50,cat:'배터리'},
+    {k:'chg',n:'충전',u:'W',min:15,max:65,step:5,cat:'배터리'},
+    {k:'ram',n:'RAM',u:'GB',min:4,max:12,step:2,cat:'SoC'},
+    {k:'dust',n:'방진방수',u:'등급',min:67,max:69,step:1,cat:'내구성'},
+    {k:'drop',n:'낙하강도',u:'m',min:1,max:3,step:0.5,cat:'내구성'},
+    {k:'price',n:'가격',u:'만원',min:60,max:120,step:5,cat:'가격'},
+  ],
+  tab:[
+    {k:'cpu',n:'CPU',u:'점',min:40,max:100,step:1,cat:'성능'},
+    {k:'gpu',n:'GPU',u:'점',min:40,max:100,step:1,cat:'성능'},
+    {k:'ai',n:'AI NPU',u:'점',min:20,max:100,step:1,cat:'성능'},
+    {k:'cam',n:'카메라',u:'MP',min:8,max:108,step:1,cat:'카메라'},
+    {k:'screen',n:'화면크기',u:'인치×10',min:84,max:148,step:1,cat:'디스플레이'},
+    {k:'bat',n:'배터리',u:'mAh',min:7000,max:14000,step:100,cat:'배터리'},
+    {k:'chg',n:'충전',u:'W',min:15,max:65,step:5,cat:'배터리'},
+    {k:'ram',n:'RAM',u:'GB',min:4,max:16,step:2,cat:'SoC'},
+    {k:'pen',n:'S펜지원',u:'(0/1)',min:0,max:1,step:1,cat:'기능'},
+    {k:'price',n:'가격',u:'만원',min:50,max:250,step:5,cat:'가격'},
+  ],
+};
+
+/* ═══════════════════════════════════════
+   ALL SERIES DATA
+═══════════════════════════════════════ */
+const SERIES = [
+  /* ── Galaxy S ── */
+  {id:'S',name:'Galaxy S',sub:'플래그십',col:'#00d4ff',pset:'flagship',
+   quicks:['S 시리즈 전체 진화 요약','S25 Ultra 구매 가치는?','칩셋 세대별 성능 차이','S26·S27 전망은?'],
+   models:[
+    {id:'S23',yr:2023,st:'c',stl:'출시완료',emoji:'🔵',
+     variants:[
+      {v:'S23',   p:{cpu:62,gpu:58,ai:40,cam:50,zoom:3,bat:3900,chg:25,ram:8,disp:70,price:99},
+       specs:[{l:'화면',v:'6.1" AMOLED 2X 120Hz'},{l:'칩셋',v:'SD8 Gen2 (OC)'},{l:'카메라',v:'50+12+10MP'},{l:'배터리',v:'3900mAh'}],
+       evo:['SD 8 Gen2 갤럭시 OC 버전','Armor Aluminum 2·Victus 2','Wi-Fi 6E·BT 5.3','25W 유선 / 15W 무선']},
+      {v:'S23+',  p:{cpu:62,gpu:58,ai:40,cam:50,zoom:3,bat:4700,chg:45,ram:8,disp:72,price:119},
+       specs:[{l:'화면',v:'6.6" AMOLED 2X 120Hz'},{l:'칩셋',v:'SD8 Gen2 (OC)'},{l:'카메라',v:'50+12+10MP'},{l:'배터리',v:'4700mAh'}],
+       evo:['4700mAh 대용량 배터리','45W 유선 고속충전','6.6인치 대화면','S23과 동일 칩셋']},
+      {v:'S23 Ultra',p:{cpu:62,gpu:58,ai:42,cam:200,zoom:10,bat:5000,chg:45,ram:12,disp:76,price:159},
+       specs:[{l:'화면',v:'6.8" QHD+ AMOLED 120Hz'},{l:'칩셋',v:'SD8 Gen2 (OC)'},{l:'메인카메라',v:'200MP f/1.7',n:true},{l:'S Pen',v:'빌트인 S Pen',n:true}],
+       evo:['200MP 메인 카메라 첫 탑재','내장 S Pen (Note 계보 흡수)','10x 광학 줌','QHD+ 최고 해상도']},
+     ]},
+    {id:'S24',yr:2024,st:'c',stl:'출시완료',emoji:'🟣',
+     variants:[
+      {v:'S24',   p:{cpu:72,gpu:70,ai:72,cam:50,zoom:3,bat:4000,chg:25,ram:8,disp:75,price:109},
+       specs:[{l:'화면',v:'6.2" AMOLED 2X 120Hz'},{l:'칩셋',v:'SD8 Gen3',n:true},{l:'Galaxy AI',v:'Circle to Search',n:true},{l:'업데이트',v:'7년 보장',n:true}],
+       evo:['Galaxy AI 첫 탑재','Circle to Search','7년 OS·보안 업데이트','SD8 Gen3 탑재']},
+      {v:'S24+',  p:{cpu:72,gpu:70,ai:72,cam:50,zoom:3,bat:4900,chg:45,ram:12,disp:77,price:129},
+       specs:[{l:'화면',v:'6.7" AMOLED 2X 120Hz'},{l:'칩셋',v:'SD8 Gen3'},{l:'배터리',v:'4900mAh',n:true},{l:'RAM',v:'12GB',n:true}],
+       evo:['4900mAh로 배터리 증가','RAM 12GB 상향','Galaxy AI 전 기능','45W 고속충전']},
+      {v:'S24 Ultra',p:{cpu:72,gpu:70,ai:74,cam:200,zoom:10,bat:5000,chg:45,ram:12,disp:80,price:169},
+       specs:[{l:'화면',v:'6.8" QHD+ AMOLED'},{l:'프레임',v:'티타늄 프레임',n:true},{l:'카메라',v:'200MP + 50MP 5x',n:true},{l:'S Pen',v:'내장 S Pen'}],
+       evo:['티타늄 프레임 첫 탑재','50MP 5x 망원 신규','Galaxy AI 최적화','AI 편집 기능 강화']},
+     ]},
+    {id:'S25',yr:2025,st:'c',stl:'출시완료',emoji:'🟢',
+     variants:[
+      {v:'S25',   p:{cpu:85,gpu:83,ai:88,cam:50,zoom:3,bat:4000,chg:25,ram:12,disp:78,price:115},
+       specs:[{l:'화면',v:'6.2" AMOLED 2X 120Hz'},{l:'칩셋',v:'SD8 Elite',n:true},{l:'Galaxy AI 2.0',v:'에이전트형',n:true},{l:'OS',v:'One UI 7',n:true}],
+       evo:['SD8 Elite — CPU+40%·GPU+37%','Galaxy AI 2.0 에이전트형','One UI 7 Now Bar','RAM 12GB 기본']},
+      {v:'S25+',  p:{cpu:85,gpu:83,ai:88,cam:50,zoom:3,bat:4900,chg:45,ram:12,disp:80,price:135},
+       specs:[{l:'화면',v:'6.7" AMOLED 2X'},{l:'칩셋',v:'SD8 Elite'},{l:'배터리',v:'4900mAh'},{l:'Wi-Fi',v:'Wi-Fi 7',n:true}],
+       evo:['Wi-Fi 7 탑재','4900mAh 배터리','45W 고속충전','Galaxy AI 2.0 전 기능']},
+      {v:'S25 Ultra',p:{cpu:85,gpu:83,ai:90,cam:200,zoom:10,bat:5000,chg:45,ram:12,disp:83,price:175},
+       specs:[{l:'화면',v:'6.9" QHD+ AMOLED',n:true},{l:'카메라',v:'200MP+50MP+10MP+12MP',n:true},{l:'S Pen',v:'내장 (압력 향상)',n:true},{l:'ProVisual',v:'AI 강화 이미징',n:true}],
+       evo:['6.9인치로 화면 확장','4카메라 시스템 완성','S Pen 압력·응답 개선','ProVisual Engine AI 강화']},
+     ]},
+    {id:'S26',yr:2026,st:'r',stl:'출시중',emoji:'🟠',
+     variants:[
+      {v:'S26',   p:{cpu:92,gpu:90,ai:94,cam:50,zoom:3,bat:4200,chg:45,ram:12,disp:84,price:125},
+       specs:[{l:'화면',v:'6.2" AMOLED 3세대 (예상)'},{l:'칩셋',v:'SD8 Elite Gen2',n:true},{l:'Galaxy AI',v:'완전 온디바이스'},{l:'배터리',v:'4200mAh',n:true}],
+       evo:['SD8 Elite Gen2 — NPU 2배','200MP 메인 탑재 예상','AMOLED 3 전력 -40%','Wi-Fi 7·BT 5.4']},
+      {v:'S26+',  p:{cpu:92,gpu:90,ai:94,cam:50,zoom:3,bat:5000,chg:45,ram:12,disp:85,price:145},
+       specs:[{l:'화면',v:'6.7" AMOLED 3세대'},{l:'배터리',v:'5000mAh',n:true},{l:'칩셋',v:'SD8 Elite Gen2'},{l:'RAM',v:'12GB LPDDR5X+'}],
+       evo:['배터리 5000mAh 돌파','AMOLED 3세대 고효율','Galaxy AI 전 기능 오프라인','RAM 성능 향상']},
+      {v:'S26 Ultra',p:{cpu:92,gpu:90,ai:96,cam:200,zoom:10,bat:5100,chg:65,ram:16,disp:90,price:185},
+       specs:[{l:'카메라',v:'200MP + 차세대 ISP',n:true},{l:'S Pen',v:'AI S Pen 2세대',n:true},{l:'충전',v:'65W 고속충전',n:true},{l:'RAM',v:'16GB',n:true}],
+       evo:['AI S Pen 필기 → 텍스트 실시간','65W 고속충전 탑재','RAM 16GB 기본','완전 온디바이스 LLM']},
+     ]},
+    {id:'S27',yr:2027,st:'f',stl:'예측',emoji:'🔴',isFuture:true,
+     variants:[
+      {v:'S27',   p:{cpu:97,gpu:95,ai:98,cam:50,zoom:5,bat:4500,chg:65,ram:16,disp:90,price:135},
+       specs:[{l:'화면',v:'Micro-LED AMOLED (전망)'},{l:'칩셋',v:'SD8 Gen5 (전망)'},{l:'배터리',v:'고체 4500mAh'},{l:'AI',v:'자율형 멀티모달'}],
+       evo:['고체 배터리 전망','Micro-LED 하이브리드','자율형 AI 에이전트','광학 가변 줌 1–5x']},
+      {v:'S27+',  p:{cpu:97,gpu:95,ai:98,cam:50,zoom:5,bat:5200,chg:65,ram:16,disp:91,price:155},
+       specs:[{l:'배터리',v:'고체 5200mAh'},{l:'칩셋',v:'SD8 Gen5'},{l:'충전',v:'65W'},{l:'AI',v:'자율 에이전트'}],
+       evo:['5200mAh 고체 배터리','65W 고속충전 표준화','자율형 AI OS 탑재','Micro-LED 화면']},
+      {v:'S27 Ultra',p:{cpu:97,gpu:95,ai:99,cam:200,zoom:15,bat:5500,chg:80,ram:16,disp:95,price:200},
+       specs:[{l:'카메라',v:'200MP + 15x 광학 줌'},{l:'S Pen',v:'AI 뉴럴 S Pen'},{l:'배터리',v:'고체 5500mAh'},{l:'충전',v:'80W'}],
+       evo:['15x 광학 줌 플래그십 최초','AI 뉴럴 S Pen 뇌파 연동 가능성','80W 고속충전','AGI 수준 온디바이스']},
+     ]},
+    {id:'S28',yr:2028,st:'f',stl:'+2년 예측',emoji:'⚫',isFuture:true,
+     variants:[
+      {v:'S28',   p:{cpu:99,gpu:98,ai:99,cam:200,zoom:5,bat:5000,chg:80,ram:16,disp:94,price:150},
+       specs:[{l:'화면',v:'홀로그래픽 가능성'},{l:'칩셋',v:'SD8 Gen6 (전망)'},{l:'배터리',v:'고체 5000mAh'},{l:'AI',v:'완전 자율형 AI OS'}],
+       evo:['완전 자율형 AI OS','고체 배터리 표준화','홀로그래픽 AR 가능성','뇌파·생체 센서 통합 전망']},
+     ]},
+   ]},
+
+  /* ── Z Fold ── */
+  {id:'ZF',name:'Z Fold',sub:'폴더블',col:'#7c6af8',pset:'fold',
+   quicks:['Z Fold 접기 내구성은?','Z Fold vs S Ultra 비교','폴더블 미래 방향','생산성 활용법은?'],
+   models:[
+    {id:'ZFold5',yr:2023,st:'c',stl:'출시완료',emoji:'📗',
+     variants:[{v:'Z Fold5',p:{cpu:62,gpu:58,ai:40,cam:50,zoom:3,bat:4400,chg:25,ram:12,inner:76,price:199},
+       specs:[{l:'내부화면',v:'7.6" QXGA+ AMOLED'},{l:'외부화면',v:'6.2" AMOLED'},{l:'칩셋',v:'SD8 Gen2'},{l:'힌지',v:'Flex Hinge 2세대'}],
+       evo:['슬림 폼팩터 개선','외부화면 23:9 비율','FlexMode 멀티태스킹','IPX8 방수']}]},
+    {id:'ZFold6',yr:2024,st:'c',stl:'출시완료',emoji:'📘',
+     variants:[{v:'Z Fold6',p:{cpu:72,gpu:70,ai:72,cam:50,zoom:3,bat:4400,chg:25,ram:12,inner:78,price:209},
+       specs:[{l:'내부화면',v:'7.6" AMOLED'},{l:'외부화면',v:'6.3" AMOLED',n:true},{l:'칩셋',v:'SD8 Gen3',n:true},{l:'Galaxy AI',v:'폴더블 최적화',n:true}],
+       evo:['외부화면 6.3인치 확장','Galaxy AI 폴더블 최적화','더 얇은 힌지','SD8 Gen3 탑재']}]},
+    {id:'ZFold7',yr:2025,st:'c',stl:'출시완료',emoji:'📙',
+     variants:[{v:'Z Fold7',p:{cpu:85,gpu:83,ai:88,cam:200,zoom:5,bat:4500,chg:25,ram:12,inner:80,price:219},
+       specs:[{l:'내부화면',v:'7.9인치 확장',n:true},{l:'칩셋',v:'SD8 Elite',n:true},{l:'메인카메라',v:'200MP',n:true},{l:'Galaxy AI 2.0',v:'멀티태스킹 최적화',n:true}],
+       evo:['7.9인치 대형화','200MP 폴더블 최초','SD8 Elite 탑재','Galaxy AI 2.0 앱 연계']}]},
+    {id:'ZFold8',yr:2026,st:'u',stl:'루머',emoji:'📓',isFuture:true,
+     variants:[{v:'Z Fold8',p:{cpu:92,gpu:90,ai:94,cam:200,zoom:5,bat:4700,chg:45,inner:82,ram:12,price:229},
+       specs:[{l:'내부화면',v:'8.0" AMOLED 3 예상'},{l:'힌지',v:'완전 플랫 예상'},{l:'칩셋',v:'SD8 Elite Gen2'},{l:'배터리',v:'4700mAh',n:true}],
+       evo:['완전 플랫 힌지 예상','8인치 돌파','온디바이스 AI 강화','배터리 증가']}]},
+    {id:'ZFold9',yr:2027,st:'f',stl:'예측',emoji:'📔',isFuture:true,
+     variants:[{v:'Z Fold9',p:{cpu:97,gpu:95,ai:98,cam:200,zoom:5,bat:4900,chg:65,inner:84,ram:16,price:239},
+       specs:[{l:'내부화면',v:'8.4인치 전망'},{l:'힌지',v:'나노 티타늄'},{l:'배터리',v:'고체 4900mAh'},{l:'AI',v:'자율형 에이전트'}],
+       evo:['나노 티타늄 힌지 내구성 3배','고체 배터리 폴더블 최초','8.4인치 대화면','자율형 AI 독립 작업']}]},
+   ]},
+
+  /* ── Z Flip ── */
+  {id:'ZP',name:'Z Flip',sub:'컴팩트폴더블',col:'#f050a0',pset:'flip',
+   quicks:['Z Flip 타겟 사용자는?','배터리 약점 개선 전망','커버화면 활용성','Flip vs S 시리즈 비교'],
+   models:[
+    {id:'ZFlip5',yr:2023,st:'c',stl:'출시완료',emoji:'💗',
+     variants:[{v:'Z Flip5',p:{cpu:62,gpu:58,ai:40,cam:12,cover:34,bat:3700,chg:25,ram:8,thick:10,price:125},
+       specs:[{l:'메인화면',v:'6.7" FHD+ AMOLED'},{l:'커버화면',v:'3.4"',n:true},{l:'칩셋',v:'SD8 Gen2'},{l:'FlexWindow',v:'위젯 지원',n:true}],
+       evo:['커버화면 3.4인치 대폭 확장','FlexWindow 위젯','크레딧카드 크기 접힘','Flex Hinge 개선']}]},
+    {id:'ZFlip6',yr:2024,st:'c',stl:'출시완료',emoji:'💜',
+     variants:[{v:'Z Flip6',p:{cpu:72,gpu:70,ai:72,cam:50,cover:34,bat:4000,chg:25,ram:12,thick:9,price:135},
+       specs:[{l:'메인화면',v:'6.7" FHD+ AMOLED'},{l:'칩셋',v:'SD8 Gen3',n:true},{l:'배터리',v:'4000mAh',n:true},{l:'카메라',v:'50MP',n:true}],
+       evo:['배터리 4000mAh 대폭 증가','50MP 메인 업그레이드','Galaxy AI 통합','RAM 12GB 상향']}]},
+    {id:'ZFlip7',yr:2025,st:'c',stl:'출시완료',emoji:'💙',
+     variants:[{v:'Z Flip7',p:{cpu:85,gpu:83,ai:88,cam:50,cover:36,bat:4000,chg:25,ram:12,thick:8,price:140},
+       specs:[{l:'커버화면',v:'3.6인치',n:true},{l:'칩셋',v:'SD8 Elite',n:true},{l:'Galaxy AI 2.0',v:'커버화면 AI',n:true},{l:'두께',v:'더 얇아진 힌지',n:true}],
+       evo:['SD8 Elite 탑재','커버화면 AI 독립 실행','더 얇은 접힌 두께','Galaxy AI 2.0 통합']}]},
+    {id:'ZFlip8',yr:2026,st:'u',stl:'루머',emoji:'🩷',isFuture:true,
+     variants:[{v:'Z Flip8',p:{cpu:92,gpu:90,ai:94,cam:50,cover:40,bat:4200,chg:45,ram:12,thick:7,price:145},
+       specs:[{l:'커버화면',v:'4.0인치 예상',n:true},{l:'충전',v:'45W 예상',n:true},{l:'배터리',v:'4200mAh'},{l:'칩셋',v:'SD8 Elite Gen2'}],
+       evo:['커버화면 4인치 돌파','45W 고속충전 최초','배터리 4200mAh','더 얇은 힌지']}]},
+    {id:'ZFlip9',yr:2027,st:'f',stl:'예측',emoji:'🌸',isFuture:true,
+     variants:[{v:'Z Flip9',p:{cpu:97,gpu:95,ai:98,cam:50,cover:44,bat:4500,chg:65,ram:12,thick:6,price:155},
+       specs:[{l:'커버화면',v:'4.4인치 전망'},{l:'배터리',v:'고체 4500mAh'},{l:'두께',v:'접었을 때 6mm대'},{l:'AI',v:'온디바이스 AI'}],
+       evo:['고체 배터리 소형화','커버화면 4.4인치 독립 사용','6mm 초박형 전망','온디바이스 AI 완전 탑재']}]},
+   ]},
+
+  /* ── Galaxy A ── */
+  {id:'A',name:'Galaxy A',sub:'미드레인지',col:'#30e090',pset:'mid',
+   quicks:['A 시리즈 성능 포지션','S 시리즈와 차이는?','카메라 실력은?','A 시리즈 추천 모델은?'],
+   models:[
+    {id:'A14',yr:2023,st:'c',stl:'출시완료',emoji:'🍃',
+     variants:[
+      {v:'A14 4G',p:{cpu:28,gpu:26,ai:18,cam:50,zoom:2,bat:5000,chg:15,ram:4,disp:62,price:22},
+       specs:[{l:'화면',v:'6.6" PLS LCD 90Hz'},{l:'칩셋',v:'Exynos 850'},{l:'카메라',v:'50MP'},{l:'배터리',v:'5000mAh'}],
+       evo:['50MP 메인 카메라 보급화','5000mAh 대용량 배터리','Exynos 850 효율 칩','저전력 90Hz LCD']},
+      {v:'A14 5G',p:{cpu:32,gpu:30,ai:20,cam:50,zoom:2,bat:5000,chg:15,ram:4,disp:63,price:28},
+       specs:[{l:'화면',v:'6.6" PLS LCD 90Hz'},{l:'칩셋',v:'Dimensity 700 5G',n:true},{l:'5G',v:'서브-6GHz',n:true},{l:'배터리',v:'5000mAh'}],
+       evo:['5G 보급형 최저가 지원','Dimensity 700 5G 칩','50MP 카메라 유지','5000mAh 배터리']},
+     ]},
+    {id:'A25',yr:2024,st:'c',stl:'출시완료',emoji:'🌿',
+     variants:[
+      {v:'A25 5G',p:{cpu:40,gpu:38,ai:28,cam:50,zoom:2,bat:5000,chg:25,ram:6,disp:68,price:32},
+       specs:[{l:'화면',v:'6.5" Super AMOLED 120Hz',n:true},{l:'칩셋',v:'Exynos 1280'},{l:'카메라',v:'50MP OIS',n:true},{l:'충전',v:'25W',n:true}],
+       evo:['Super AMOLED 120Hz 보급화','OIS 손떨림 보정 탑재','25W 고속충전','IP67 방수 지원']},
+     ]},
+    {id:'A35',yr:2024,st:'c',stl:'출시완료',emoji:'🌱',
+     variants:[
+      {v:'A35 5G',p:{cpu:48,gpu:45,ai:35,cam:50,zoom:2,bat:5000,chg:25,ram:6,disp:72,price:40},
+       specs:[{l:'화면',v:'6.6" Super AMOLED 120Hz'},{l:'칩셋',v:'Exynos 1380',n:true},{l:'카메라',v:'50MP OIS f/1.8',n:true},{l:'보안',v:'Knox 보안 강화',n:true}],
+       evo:['Exynos 1380 전작 대비 향상','카메라 화질 개선','Knox 보안 탑재','IP67 방수 유지']},
+     ]},
+    {id:'A54',yr:2023,st:'c',stl:'출시완료',emoji:'🌳',
+     variants:[
+      {v:'A54 5G',p:{cpu:42,gpu:40,ai:28,cam:50,zoom:2,bat:5000,chg:25,ram:8,disp:68,price:45},
+       specs:[{l:'화면',v:'6.4" Super AMOLED 120Hz'},{l:'칩셋',v:'Exynos 1380'},{l:'IP67',v:'방수 인증',n:true},{l:'배터리',v:'5000mAh'}],
+       evo:['IP67 방수 미드레인지 도입','OIS 탑재','5000mAh 배터리','전면 유리 Victus']},
+     ]},
+    {id:'A55',yr:2024,st:'c',stl:'출시완료',emoji:'🌲',
+     variants:[
+      {v:'A55 5G',p:{cpu:50,gpu:48,ai:42,cam:50,zoom:2,bat:5000,chg:25,ram:8,disp:72,price:49},
+       specs:[{l:'화면',v:'6.6" Super AMOLED 120Hz',n:true},{l:'칩셋',v:'Exynos 1480',n:true},{l:'카메라',v:'50MP OIS'},{l:'Galaxy AI',v:'일부 기능'}],
+       evo:['Exynos 1480 — 35% 향상','6.6인치 화면 확장','Galaxy AI 일부 지원','메모리 확장 기능']},
+     ]},
+    {id:'A56',yr:2025,st:'c',stl:'출시완료',emoji:'🌴',
+     variants:[
+      {v:'A56 5G',p:{cpu:58,gpu:55,ai:55,cam:50,zoom:3,bat:5000,chg:45,ram:8,disp:75,price:52},
+       specs:[{l:'화면',v:'6.7" AMOLED 120Hz',n:true},{l:'칩셋',v:'Exynos 1580',n:true},{l:'충전',v:'45W 고속충전',n:true},{l:'Galaxy AI',v:'주요 기능',n:true}],
+       evo:['45W 고속충전 미드레인지 탑재','Galaxy AI 주요 기능 보급','Exynos 1580 AI NPU','6.7인치 대화면']},
+     ]},
+    {id:'A73',yr:2023,st:'c',stl:'출시완료',emoji:'🌾',
+     variants:[
+      {v:'A73 5G',p:{cpu:45,gpu:43,ai:30,cam:108,zoom:2,bat:5000,chg:25,ram:8,disp:70,price:55},
+       specs:[{l:'화면',v:'6.7" Super AMOLED 120Hz'},{l:'칩셋',v:'SD778G'},{l:'메인카메라',v:'108MP',n:true},{l:'배터리',v:'5000mAh'}],
+       evo:['108MP 메인 카메라 상급형','SD778G 미드 프리미엄','30x 스페이스 줌','OIS 탑재']},
+     ]},
+    {id:'A75',yr:2025,st:'c',stl:'출시완료',emoji:'🍂',
+     variants:[
+      {v:'A75 5G',p:{cpu:60,gpu:58,ai:57,cam:108,zoom:3,bat:5500,chg:45,ram:8,disp:76,price:58},
+       specs:[{l:'화면',v:'6.7" AMOLED 120Hz'},{l:'칩셋',v:'Exynos 1580'},{l:'카메라',v:'108MP OIS',n:true},{l:'충전',v:'45W',n:true}],
+       evo:['108MP 카메라 미드레인지 확산','45W 고속충전','배터리 5500mAh','Galaxy AI 기능 탑재']},
+     ]},
+    {id:'A57',yr:2026,st:'u',stl:'루머',emoji:'🌿',isFuture:true,
+     variants:[
+      {v:'A57 5G',p:{cpu:63,gpu:60,ai:64,cam:50,zoom:3,bat:5500,chg:45,ram:8,disp:77,price:55},
+       specs:[{l:'칩셋',v:'Exynos 1680 예상'},{l:'배터리',v:'5500mAh 예상',n:true},{l:'Galaxy AI',v:'전체 기능 예상'},{l:'Wi-Fi',v:'Wi-Fi 6E 예상'}],
+       evo:['Galaxy AI 전 기능 보급 전망','5500mAh 대용량','Exynos 1680 AI 강화','Wi-Fi 6E 탑재 예상']},
+     ]},
+   ]},
+
+  /* ── Galaxy M ── */
+  {id:'M',name:'Galaxy M',sub:'배터리특화',col:'#f0a020',pset:'mid',
+   quicks:['M 시리즈 배터리 강점','A 시리즈와 차이점','M 시리즈 타겟 사용자','성능 vs 배터리 밸런스'],
+   models:[
+    {id:'M14',yr:2023,st:'c',stl:'출시완료',emoji:'🟡',
+     variants:[
+      {v:'M14 4G',p:{cpu:28,gpu:26,ai:16,cam:50,zoom:2,bat:6000,chg:25,ram:4,disp:60,price:18},
+       specs:[{l:'화면',v:'6.7" FHD+ AMOLED'},{l:'칩셋',v:'Exynos 1330'},{l:'배터리',v:'6000mAh',n:true},{l:'카메라',v:'50MP'}],
+       evo:['6000mAh 초대용량 배터리','AMOLED 보급 모델','25W 충전 지원','슬림 경량 디자인']},
+      {v:'M14 5G',p:{cpu:32,gpu:30,ai:18,cam:50,zoom:2,bat:6000,chg:25,ram:4,disp:61,price:22},
+       specs:[{l:'화면',v:'6.7" FHD+ AMOLED'},{l:'칩셋',v:'Exynos 1330 5G'},{l:'배터리',v:'6000mAh'},{l:'5G',v:'지원',n:true}],
+       evo:['5G 지원 저가형','6000mAh 배터리 유지','Exynos 1330 5G','AMOLED 디스플레이']},
+     ]},
+    {id:'M34',yr:2023,st:'c',stl:'출시완료',emoji:'🟠',
+     variants:[
+      {v:'M34 5G',p:{cpu:45,gpu:42,ai:30,cam:50,zoom:2,bat:6000,chg:25,ram:6,disp:66,price:28},
+       specs:[{l:'화면',v:'6.5" Super AMOLED 120Hz'},{l:'칩셋',v:'Exynos 1280'},{l:'배터리',v:'6000mAh'},{l:'OIS',v:'손떨림 보정'}],
+       evo:['6000mAh 초대용량','OIS 미드레인지 탑재','120Hz Super AMOLED','IP67 방수 추가']},
+     ]},
+    {id:'M55',yr:2024,st:'c',stl:'출시완료',emoji:'🔶',
+     variants:[
+      {v:'M55 5G',p:{cpu:55,gpu:52,ai:45,cam:50,zoom:3,bat:5000,chg:45,ram:8,disp:72,price:35},
+       specs:[{l:'화면',v:'6.7" Super AMOLED 120Hz'},{l:'칩셋',v:'SD7s Gen2',n:true},{l:'충전',v:'45W 고속충전',n:true},{l:'카메라',v:'50MP OIS'}],
+       evo:['SD7s Gen2 — 플래그십급','45W 고속충전 탑재','6.7인치 Super AMOLED','Galaxy AI 일부 기능']},
+     ]},
+    {id:'M56',yr:2025,st:'c',stl:'출시완료',emoji:'🔷',
+     variants:[
+      {v:'M56 5G',p:{cpu:60,gpu:58,ai:55,cam:108,zoom:3,bat:6000,chg:45,ram:8,disp:74,price:38},
+       specs:[{l:'화면',v:'6.7" Super AMOLED'},{l:'칩셋',v:'SD7s Gen3'},{l:'카메라',v:'108MP',n:true},{l:'배터리',v:'6000mAh'}],
+       evo:['108MP 메인 카메라 M 시리즈 최초','6000mAh 배터리 유지','SD7s Gen3 성능 향상','Galaxy AI 기본 지원']},
+     ]},
+   ]},
+
+  /* ── Galaxy F ── */
+  {id:'F',name:'Galaxy F',sub:'온라인 전용',col:'#f06040',pset:'budget',
+   quicks:['F 시리즈는 어디서 파나요?','M 시리즈와 차이는?','F 시리즈 가성비 분석','주요 타겟 시장은?'],
+   models:[
+    {id:'F14',yr:2023,st:'c',stl:'출시완료',emoji:'🟥',
+     variants:[
+      {v:'F14 5G',p:{cpu:30,gpu:28,ai:18,cam:50,bat:6000,chg:25,ram:6,disp:62,price:20},
+       specs:[{l:'화면',v:'6.6" FHD+ AMOLED'},{l:'칩셋',v:'Exynos 1330'},{l:'배터리',v:'6000mAh'},{l:'5G',v:'지원'}],
+       evo:['6000mAh 초대용량','5G 저가 보급','50MP 메인 카메라','AMOLED 온라인 전용']},
+     ]},
+    {id:'F15',yr:2024,st:'c',stl:'출시완료',emoji:'🟧',
+     variants:[
+      {v:'F15 5G',p:{cpu:35,gpu:33,ai:22,cam:50,bat:6000,chg:25,ram:6,disp:65,price:22},
+       specs:[{l:'화면',v:'6.7" FHD+ AMOLED 90Hz',n:true},{l:'칩셋',v:'Helio G85'},{l:'배터리',v:'6000mAh'},{l:'USB',v:'Type-C'}],
+       evo:['6.7인치로 화면 확장','90Hz AMOLED','6000mAh 유지','온라인 전용 가성비']},
+     ]},
+    {id:'F55',yr:2024,st:'c',stl:'출시완료',emoji:'🔴',
+     variants:[
+      {v:'F55 5G',p:{cpu:55,gpu:52,ai:42,cam:50,bat:5000,chg:45,ram:8,disp:72,price:32},
+       specs:[{l:'화면',v:'6.7" Super AMOLED 120Hz',n:true},{l:'칩셋',v:'SD7s Gen2',n:true},{l:'충전',v:'45W',n:true},{l:'디자인',v:'Galaxy 방패 디자인',n:true}],
+       evo:['Super AMOLED 120Hz F 시리즈 최고급','45W 고속충전','SD7s Gen2 탑재','방패 패턴 디자인']},
+     ]},
+   ]},
+
+  /* ── XCover ── */
+  {id:'X',name:'XCover',sub:'방수방진 러기드',col:'#80c860',pset:'rugged',
+   quicks:['XCover 방수 등급은?','일반폰과 어떻게 다른가?','기업·군사용 적합성','내구성 테스트 기준'],
+   models:[
+    {id:'XCover6',yr:2023,st:'c',stl:'출시완료',emoji:'🟩',
+     variants:[
+      {v:'XCover6 Pro',p:{cpu:55,gpu:50,ai:30,cam:50,bat:4050,chg:25,ram:6,dust:68,drop:1.5,price:72},
+       specs:[{l:'화면',v:'6.6" FHD+ LCD'},{l:'방수방진',v:'IP68 + MIL-STD-810H',n:true},{l:'배터리',v:'교체형 4050mAh',n:true},{l:'PTT',v:'워키토키 버튼'}],
+       evo:['교체형 배터리 지원','MIL-STD-810H 군사 규격','IP68 방수방진','PTT 전용 하드웨어 버튼']},
+     ]},
+    {id:'XCover7',yr:2024,st:'c',stl:'출시완료',emoji:'💚',
+     variants:[
+      {v:'XCover7',p:{cpu:62,gpu:58,ai:40,cam:50,bat:4050,chg:25,ram:6,dust:68,drop:2,price:75},
+       specs:[{l:'화면',v:'6.6" FHD+ LCD'},{l:'방수방진',v:'IP68 + MIL-STD-810H'},{l:'OS',v:'Android 14 / One UI 6',n:true},{l:'배터리',v:'교체형 4050mAh'}],
+       evo:['낙하 강도 2m로 향상','One UI 6 업데이트','보안 패치 5년 보장','DeX 지원']},
+     ]},
+    {id:'XCover7Pro',yr:2025,st:'c',stl:'출시완료',emoji:'🍀',
+     variants:[
+      {v:'XCover7 Pro',p:{cpu:70,gpu:65,ai:55,cam:50,bat:4500,chg:45,ram:8,dust:68,drop:2.5,price:85},
+       specs:[{l:'화면',v:'6.6" FHD+ LCD 120Hz',n:true},{l:'충전',v:'45W 고속충전',n:true},{l:'배터리',v:'교체형 4500mAh',n:true},{l:'OS',v:'One UI 7'}],
+       evo:['120Hz 디스플레이 러기드 최초','45W 고속충전','배터리 4500mAh 증가','낙하 강도 2.5m']},
+     ]},
+   ]},
+
+  /* ── Tab ── */
+  {id:'T',name:'Galaxy Tab',sub:'태블릿',col:'#48c8f8',pset:'tab',
+   quicks:['Tab S 시리즈 용도는?','S펜 탑재 모델은?','iPad와 비교해줘','Tab 미래 방향은?'],
+   models:[
+    {id:'TabS9',yr:2023,st:'c',stl:'출시완료',emoji:'📱',
+     variants:[
+      {v:'Tab S9',p:{cpu:72,gpu:70,ai:60,cam:13,screen:110,bat:8400,chg:45,ram:8,pen:1,price:99},
+       specs:[{l:'화면',v:'11" AMOLED 120Hz'},{l:'칩셋',v:'SD8 Gen2'},{l:'S Pen',v:'탑재',n:true},{l:'IP68',v:'방수 방진',n:true}],
+       evo:['태블릿 IP68 방수 첫 탑재','AMOLED 디스플레이','SD8 Gen2 탑재','S Pen 기본 포함']},
+      {v:'Tab S9+',p:{cpu:72,gpu:70,ai:60,cam:13,screen:126,bat:10090,chg:45,ram:12,pen:1,price:119},
+       specs:[{l:'화면',v:'12.6" AMOLED 120Hz'},{l:'배터리',v:'10090mAh'},{l:'RAM',v:'12GB'},{l:'S Pen',v:'포함'}],
+       evo:['12.6인치 대형 AMOLED','10090mAh 초대용량','12GB RAM','멀티태스킹 최적화']},
+      {v:'Tab S9 Ultra',p:{cpu:72,gpu:70,ai:62,cam:13,screen:148,bat:11200,chg:45,ram:12,pen:1,price:149},
+       specs:[{l:'화면',v:'14.6" AMOLED 120Hz',n:true},{l:'노치',v:'듀얼 카메라 노치'},{l:'배터리',v:'11200mAh'},{l:'RAM',v:'12/16GB'}],
+       evo:['14.6인치 최대 태블릿','듀얼 셀프카메라','11200mAh 초대용량','DeX 생산성 모드']},
+      {v:'Tab S9 FE',p:{cpu:52,gpu:48,ai:38,cam:8,screen:108,bat:8000,chg:45,ram:6,pen:1,price:55},
+       specs:[{l:'화면',v:'10.9" LCD 90Hz'},{l:'칩셋',v:'Exynos 1380'},{l:'S Pen',v:'포함 (FE 최초)',n:true},{l:'IP68',v:'방수'}],
+       evo:['FE 라인 S Pen 포함 첫 탑재','IP68 방수','Exynos 1380 효율','5G 지원']},
+     ]},
+    {id:'TabS10',yr:2024,st:'c',stl:'출시완료',emoji:'💻',
+     variants:[
+      {v:'Tab S10',p:{cpu:85,gpu:83,ai:80,cam:13,screen:110,bat:8400,chg:45,ram:12,pen:1,price:109},
+       specs:[{l:'화면',v:'11" AMOLED 120Hz'},{l:'칩셋',v:'MediaTek D9300+',n:true},{l:'Galaxy AI',v:'탑재',n:true},{l:'DeX',v:'무선 DeX'}],
+       evo:['Galaxy AI 태블릿 탑재','MediaTek D9300+ 채택','Note Assist AI 메모','무선 DeX 지원']},
+      {v:'Tab S10+',p:{cpu:85,gpu:83,ai:80,cam:13,screen:126,bat:10090,chg:45,ram:12,pen:1,price:129},
+       specs:[{l:'화면',v:'12.4" AMOLED 120Hz'},{l:'배터리',v:'10090mAh'},{l:'Galaxy AI',v:'탑재'},{l:'RAM',v:'12GB'}],
+       evo:['12.4인치 화면 조정','Galaxy AI 생산성','AI 기반 번역·요약','멀티태스킹 AI 연계']},
+      {v:'Tab S10 Ultra',p:{cpu:85,gpu:83,ai:82,cam:13,screen:148,bat:11200,chg:45,ram:12,pen:1,price:159},
+       specs:[{l:'화면',v:'14.6" AMOLED 120Hz'},{l:'RAM',v:'12/16GB'},{l:'Galaxy AI',v:'Pro 기능'},{l:'DeX',v:'2560×1600 지원'}],
+       evo:['Galaxy AI Pro 탑재','AI 문서 요약·번역','14.6인치 생산성 극대화','DeX 4K 지원']},
+      {v:'Tab S10 FE',p:{cpu:65,gpu:62,ai:58,cam:8,screen:108,bat:8000,chg:45,ram:6,pen:1,price:60},
+       specs:[{l:'화면',v:'10.9" LCD 90Hz'},{l:'칩셋',v:'Exynos 1580'},{l:'Galaxy AI',v:'기본 기능'},{l:'S Pen',v:'포함'}],
+       evo:['Galaxy AI FE 탑재','Exynos 1580 향상','S Pen 기본 포함 유지','가성비 태블릿']},
+     ]},
+    {id:'TabS11',yr:2026,st:'f',stl:'예측',emoji:'🖥️',isFuture:true,
+     variants:[
+      {v:'Tab S11',p:{cpu:92,gpu:90,ai:94,cam:13,screen:110,bat:9000,chg:65,ram:12,pen:1,price:119},
+       specs:[{l:'화면',v:'11" AMOLED 3세대 전망'},{l:'칩셋',v:'SD8 Elite Gen2 예상'},{l:'배터리',v:'9000mAh 예상'},{l:'Galaxy AI',v:'완전 자율 작업'}],
+       evo:['완전 자율형 AI 에이전트','AMOLED 3세대 전력 절감','배터리 9000mAh','65W 고속충전 태블릿 최초']},
+     ]},
+   ]},
+];
+
+/* ═══════════════════════════════════════
+   STATE
+═══════════════════════════════════════ */
+let curS=0,curM=0,curV=0;
+let origP={},workP={};
+let chatHist=[];
+
+function getS(){return SERIES[curS]}
+function getMdl(){return getS().models[curM]}
+function getVar(){return getMdl().variants[curV]}
+function getPS(){return P[getS().pset]}
+
+/* ═══════════════════════════════════════
+   BOOT
+═══════════════════════════════════════ */
+function boot(){
+  buildSeriesTabs();
+  selectSeries(0);
+}
+
+/* ═══════════════════════════════════════
+   SERIES TABS
+═══════════════════════════════════════ */
+function buildSeriesTabs(){
+  document.getElementById('seriesBar').innerHTML=SERIES.map((s,i)=>`
+    <button class="stab${i===curS?' act':''}" onclick="selectSeries(${i})"
+      style="${i===curS?`background:${s.col}15;border-color:${s.col}50;color:${s.col}`:''}">
+      <span class="col-dot" style="background:${s.col}"></span>
+      ${s.name} <span class="cnt">(${s.models.length})</span>
+    </button>`).join('');
+}
+
+function selectSeries(i){
+  curS=i;curM=0;curV=0;chatHist=[];
+  buildSeriesTabs();
+  buildModelRow();
+  buildVariantRow();
+  loadVariant();
+}
+
+/* ═══════════════════════════════════════
+   MODEL + VARIANT ROW
+═══════════════════════════════════════ */
+function buildModelRow(){
+  const s=getS();
+  const mr=document.getElementById('modelRow');
+  let html='';
+  s.models.forEach((m,i)=>{
+    if(i>0) html+='<div class="mr-sep"></div>';
+    const sc={c:'st-c',r:'st-r',u:'st-u',f:'st-f'}[m.st]||'st-f';
+    html+=`<button class="mbtn${i===curM?' act':''}" onclick="selectModel(${i})"
+      style="${i===curM?`background:${s.col}12;border-color:${s.col}40`:''}"
+    >
+      <span style="${i===curM?'color:'+s.col:''}">${m.id}</span>
+      <span class="yr">${m.yr}</span>
+      <span class="st ${sc}">${m.stl}</span>
+    </button>`;
+  });
+  mr.innerHTML=html;
+}
+
+function buildVariantRow(){
+  const m=getMdl(),s=getS();
+  const vr=document.getElementById('variantRow');
+  if(m.variants.length<=1){vr.style.display='none';return;}
+  vr.style.display='flex';
+  vr.innerHTML=m.variants.map((v,i)=>`
+    <button class="vbtn${i===curV?' act':''}" onclick="selectVariant(${i})"
+      style="${i===curV?`border-color:${s.col}55;color:${s.col};background:${s.col}0c`:''}">
+      ${v.v}
+    </button>`).join('');
+}
+
+function selectModel(i){curM=i;curV=0;buildModelRow();buildVariantRow();loadVariant();}
+function selectVariant(i){curV=i;buildVariantRow();loadVariant();}
+
+/* ═══════════════════════════════════════
+   LOAD VARIANT
+═══════════════════════════════════════ */
+function loadVariant(){
+  const s=getS(),m=getMdl(),v=getVar();
+  origP={...v.p};workP={...v.p};
+  document.getElementById('modBadge').style.display='none';
+  document.getElementById('ctxTag').textContent=`${s.name} ${v.v} ${m.yr}`;
+  document.getElementById('hdSeries').textContent=' '+s.name;
+  document.getElementById('hdModel').textContent=' '+v.v;
+  document.getElementById('hdYear').textContent=m.yr;
+  // color
+  document.querySelector('.sim-btn').style.borderColor=s.col;
+  document.querySelector('.sim-btn').style.color=s.col;
+  document.getElementById('sg1').setAttribute('stop-color',s.col);
+  // future
+  const isFuture=!!m.isFuture;
+  document.getElementById('futurePanel').style.display=isFuture?'block':'none';
+  document.getElementById('futureBtn').style.display=isFuture?'inline-block':'none';
+  if(isFuture) document.getElementById('fpDesc').textContent=
+    `Galaxy ${v.v} (${m.yr}) — ${m.stl} 모델. AI 트렌드 예측 또는 선형 트렌드를 적용하거나 직접 파라미터를 수정하세요.`;
+  // phone widget
+  document.getElementById('phEmoji').textContent=m.emoji;
+  document.getElementById('phIcon').style.borderColor=s.col+'50';
+  document.getElementById('phName').textContent='Galaxy '+v.v;
+  document.getElementById('phCat').textContent=s.name+' · '+s.sub;
+  document.getElementById('phCat').style.color=s.col;
+  document.getElementById('phSt').textContent=m.yr+' — '+m.stl;
+  // quick btns
+  document.getElementById('qrow').innerHTML=s.quicks.map(q=>`
+    <button class="qb" onclick="quickAsk('${q}')">${q}</button>`).join('');
+  // build params
+  buildParams();
+  refreshRight(false);
+  document.getElementById('simCard').style.display='none';
+  document.getElementById('fpResult').style.display='none';
+}
+
+/* ═══════════════════════════════════════
+   PARAMS
+═══════════════════════════════════════ */
+function buildParams(){
+  const ps=getPS(),s=getS();
+  const cats={};
+  ps.forEach(p=>{if(!cats[p.cat])cats[p.cat]=[];cats[p.cat].push(p);});
+  let html='';
+  Object.entries(cats).forEach(([cat,params])=>{
+    html+=`<div class="cat-sep">${cat}</div>`;
+    params.forEach(p=>{
+      const v=workP[p.k]??origP[p.k]??p.min;
+      html+=`<div class="pr">
+        <div class="pr-row">
+          <span class="pr-label">${p.n} <span class="pr-tag" id="ptag_${p.k}">●</span></span>
+          <div class="pr-inp-wrap">
+            <input type="number" class="pr-num" id="pnum_${p.k}" value="${v}"
+              min="${p.min}" max="${p.max}" step="${p.step}"
+              oninput="onNum('${p.k}',this.value)" onchange="onNum('${p.k}',this.value)"/>
+            <span class="pr-unit">${p.u}</span>
+          </div>
+        </div>
+        <input type="range" class="pr-sl" id="psl_${p.k}"
+          min="${p.min}" max="${p.max}" step="${p.step}" value="${v}"
+          style="--ac:${s.col}" oninput="onSl('${p.k}',this.value)"/>
+      </div>`;
+    });
+  });
+  document.getElementById('paramWrap').innerHTML=html;
+}
+
+function onSl(k,v){
+  v=parseFloat(v);workP[k]=v;
+  const n=document.getElementById('pnum_'+k);if(n)n.value=v;
+  markTag(k);refreshRight(true);
+}
+function onNum(k,v){
+  const p=getPS().find(d=>d.k===k);if(!p)return;
+  v=Math.min(p.max,Math.max(p.min,parseFloat(v)||p.min));
+  workP[k]=v;
+  const sl=document.getElementById('psl_'+k);if(sl)sl.value=v;
+  markTag(k);refreshRight(true);
+}
+function markTag(k){
+  const t=document.getElementById('ptag_'+k);if(!t)return;
+  const ch=workP[k]!==origP[k];
+  t.className='pr-tag'+(ch?' show':'');
+  const anyChg=getPS().some(p=>workP[p.k]!==origP[p.k]);
+  document.getElementById('modBadge').style.display=anyChg?'inline-block':'none';
+}
+function resetP(){
+  workP={...origP};
+  getPS().forEach(p=>{
+    const sl=document.getElementById('psl_'+p.k);
+    const nm=document.getElementById('pnum_'+p.k);
+    if(sl)sl.value=origP[p.k]??p.min;
+    if(nm)nm.value=origP[p.k]??p.min;
+    markTag(p.k);
+  });
+  refreshRight(false);
+  document.getElementById('modBadge').style.display='none';
+}
+
+/* ═══════════════════════════════════════
+   SCORE
+═══════════════════════════════════════ */
+function normV(k,v){
+  const p=getPS().find(d=>d.k===k);if(!p)return 50;
+  // lower thick/price = better
+  if(k==='thick'||k==='price') return Math.round((p.max-v)/(p.max-p.min)*100);
+  return Math.round((v-p.min)/(p.max-p.min)*100);
+}
+function calcScore(params){
+  const ps=getPS();
+  const wts={cpu:.22,gpu:.16,ai:.2,cam:.1,zoom:.04,bat:.08,chg:.04,ram:.08,disp:.06,inner:.03,cover:.03,thick:.03,screen:.03,pen:.02,dust:.04,drop:.04,price:0};
+  let s=0,tw=0;
+  ps.forEach(p=>{const w=wts[p.k]||0;if(!w)return;s+=normV(p.k,params[p.k]||p.min)*w;tw+=w;});
+  return tw>0?Math.round(s/tw):0;
+}
+function gradeOf(s){
+  if(s>=92)return{g:'S+',d:'미래 세대 수준',c:'#00ff88'};
+  if(s>=82)return{g:'S',d:'최상급 플래그십',c:'#00d4ff'};
+  if(s>=70)return{g:'A',d:'고성능 프리미엄',c:'#7c6af8'};
+  if(s>=56)return{g:'B',d:'준수한 성능',c:'#f0a020'};
+  if(s>=40)return{g:'C',d:'중급 성능',c:'#80c860'};
+  return{g:'D',d:'보급형',c:'#888'};
+}
+function updateScore(){
+  const sc=calcScore(workP),g=gradeOf(sc);
+  document.getElementById('scNum').textContent=sc;
+  document.getElementById('scGrade').textContent=g.g;
+  document.getElementById('scGrade').style.color=g.c;
+  document.getElementById('scDesc').textContent=g.d;
+  document.getElementById('hdScore').textContent=' '+sc;
+  const off=138.2*(1-sc/100);
+  document.getElementById('sc-circle').style.strokeDashoffset=off;
+  document.getElementById('sg2').setAttribute('stop-color',g.c);
+}
+
+/* ═══════════════════════════════════════
+   RIGHT PANEL
+═══════════════════════════════════════ */
+const BAR_MAP=[
+  {k:'cpu',l:'CPU'},{k:'gpu',l:'GPU'},{k:'ai',l:'AI'},
+  {k:'cam',l:'카메라'},{k:'bat',l:'배터리'},{k:'ram',l:'RAM'},
+  {k:'disp',l:'화면'},{k:'inner',l:'내부화면'},{k:'cover',l:'커버화면'},
+  {k:'screen',l:'화면크기'},{k:'dust',l:'방진'},{k:'drop',l:'낙하'},
+];
+
+function refreshRight(fromSlider){
+  updateScore();
+  buildBars();buildDiff();
+  if(!fromSlider){buildSpecs();buildEvo();}
+}
+
+function buildBars(){
+  const s=getS(),bg=document.getElementById('barGrp');
+  bg.innerHTML='';
+  BAR_MAP.forEach(b=>{
+    if(!workP.hasOwnProperty(b.k)&&!origP.hasOwnProperty(b.k))return;
+    const ov=normV(b.k,origP[b.k]||0);
+    const cv=normV(b.k,workP[b.k]||0);
+    const d=cv-ov,dc=d>0?'dup':d<0?'ddn':'deq',ds=d>0?'+'+d:d===0?'—':''+d;
+    bg.innerHTML+=`<div class="brow">
+      <div class="bkey">${b.l}</div>
+      <div class="btrack">
+        <div class="borig" style="width:${ov}%"></div>
+        <div class="bfill" id="bf_${b.k}" style="width:0%;background:linear-gradient(90deg,${s.col},${s.col}88)"></div>
+      </div>
+      <div class="bnum">${workP[b.k]??0}</div>
+      <div class="bdelta ${dc}">${ds}</div>
+    </div>`;
+  });
+  setTimeout(()=>BAR_MAP.forEach(b=>{
+    const el=document.getElementById('bf_'+b.k);
+    if(el)el.style.width=normV(b.k,workP[b.k]||0)+'%';
+  }),30);
+}
+
+function buildDiff(){
+  const ps=getPS();
+  document.getElementById('diffBody').innerHTML=ps.map(p=>{
+    const ov=origP[p.k]??p.min,cv=workP[p.k]??p.min;
+    const d=Math.round((cv-ov)*10)/10;
+    const ds=d>0?'+'+d:d===0?'—':''+d;
+    const dc=d>0?'dup2':d<0?'ddn2':'';
+    return`<tr${d!==0?' class="chg"':''}>
+      <td style="color:var(--txt2)">${p.n}</td>
+      <td class="dorig">${ov}</td>
+      <td class="dcur">${cv}</td>
+      <td class="${dc}">${ds}</td>
+    </tr>`;
+  }).join('');
+}
+
+function buildSpecs(){
+  const v=getVar();
+  document.getElementById('specGrid').innerHTML=(v.specs||[]).map(s=>`
+    <div class="sc fin">
+      <div class="sc-l">${s.l}</div>
+      <div class="sc-v">${s.v}${s.n?'<span class="sc-n">NEW</span>':''}</div>
+    </div>`).join('');
+}
+
+function buildEvo(){
+  const v=getVar(),s=getS();
+  document.getElementById('evoList').innerHTML=(v.evo||[]).map((e,i)=>`
+    <div class="evo-item fin" style="animation-delay:${i*.05}s">
+      <div class="evo-dot" style="background:${s.col}"></div>${e}
+    </div>`).join('');
+}
+
+/* ═══════════════════════════════════════
+   FUTURE PREDICTION
+═══════════════════════════════════════ */
+async function runAIPredict(){
+  const btn=document.getElementById('aiPredBtn');
+  btn.disabled=true;btn.textContent='분석 중...';
+  const s=getS(),m=getMdl(),v=getVar(),ps=getPS();
+  const confirmed=s.models.filter(mm=>!mm.isFuture);
+  const trendCtx=confirmed.map(mm=>
+    `${mm.id}(${mm.yr}): ${ps.map(p=>`${p.n}=${mm.variants[0].p[p.k]??p.min}`).join(', ')}`
+  ).join('\n');
+  const pr=`Samsung ${s.name} 시리즈 전문 애널리스트 분석:
+
+예측 대상: Galaxy ${v.v} (${m.yr}) — ${m.stl}
+
+확인된 트렌드 데이터:
+${trendCtx}
+
+현재 설정 파라미터: ${ps.map(p=>`${p.n}=${workP[p.k]??p.min}${p.u}`).join(', ')}
+
+아래 JSON 형식으로 답변 (다른 텍스트 없이):
+{"params":{"${ps.map(p=>p.k).join('":숫자,"')}":숫자},"analysis":"한국어 2~3문장 트렌드 분석"}`;
+  const res=document.getElementById('fpResult');
+  res.style.display='block';
+  res.innerHTML='<div class="ldots"><span>▸</span><span>▸</span><span>▸</span></div>';
+  try{
+    const r=await fetch('https://api.anthropic.com/v1/messages',{method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:1000,
+        messages:[{role:'user',content:pr}]})});
+    const data=await r.json();
+    const txt=data.content.map(c=>c.text||'').join('');
+    const jm=txt.match(/\{[\s\S]*\}/);
+    if(jm){
+      const parsed=JSON.parse(jm[0]);
+      if(parsed.params){
+        ps.forEach(p=>{
+          const val=parsed.params[p.k];
+          if(val===undefined)return;
+          const cl=Math.min(p.max,Math.max(p.min,Math.round(parseFloat(val)*10)/10));
+          workP[p.k]=cl;
+          const sl=document.getElementById('psl_'+p.k);
+          const nm=document.getElementById('pnum_'+p.k);
+          if(sl)sl.value=cl;if(nm)nm.value=cl;
+          markTag(p.k);
+        });
+        refreshRight(false);
+        res.innerHTML=`<span style="color:var(--ZF)">✦ AI 예측 적용 완료</span><br><br>${parsed.analysis||''}`;
+      }
+    }else{res.innerHTML=txt;}
+  }catch(e){res.innerHTML='⚠️ 오류. 다시 시도해주세요.';}
+  btn.disabled=false;btn.textContent='✦ AI 트렌드 자동 예측';
+}
+
+function applyLinear(){
+  const s=getS(),m=getMdl(),ps=getPS();
+  const confirmed=s.models.filter(mm=>!mm.isFuture);
+  if(confirmed.length<2){
+    const res=document.getElementById('fpResult');
+    res.style.display='block';
+    res.innerHTML='⚠️ 선형 예측에는 최소 2개 확인된 모델이 필요합니다.';
+    return;
+  }
+  const last=confirmed[confirmed.length-1];
+  const prev=confirmed[confirmed.length-2];
+  const yGap=m.yr-last.yr;
+  ps.forEach(p=>{
+    const lv=last.variants[0].p[p.k]??p.min;
+    const pv=prev.variants[0].p[p.k]??p.min;
+    const d=lv-pv;
+    const proj=Math.round((lv+d*yGap)*10)/10;
+    const cl=Math.min(p.max,Math.max(p.min,proj));
+    workP[p.k]=cl;
+    const sl=document.getElementById('psl_'+p.k);
+    const nm=document.getElementById('pnum_'+p.k);
+    if(sl)sl.value=cl;if(nm)nm.value=cl;
+    markTag(p.k);
+  });
+  refreshRight(false);
+  const res=document.getElementById('fpResult');
+  res.style.display='block';
+  res.innerHTML=`<span style="color:var(--hit)">📈 선형 트렌드 적용</span><br>${prev.id}→${last.id} 트렌드를 ${yGap}년 연장해 ${m.id} 파라미터를 예측했습니다.`;
+}
+
+function savePred(){
+  const v=getVar(),m=getMdl(),ps=getPS();
+  Object.assign(v.p,workP);
+  Object.assign(origP,workP);
+  ps.forEach(p=>markTag(p.k));
+  document.getElementById('modBadge').style.display='none';
+  const res=document.getElementById('fpResult');
+  res.style.display='block';
+  res.innerHTML=`<span style="color:var(--hit)">💾 저장 완료</span> — 현재 파라미터가 Galaxy ${v.v}의 기준값으로 설정되었습니다.`;
+}
+
+/* ═══════════════════════════════════════
+   SIMULATE
+═══════════════════════════════════════ */
+async function runSim(){
+  const card=document.getElementById('simCard'),body=document.getElementById('simBody');
+  card.style.display='block';
+  card.scrollIntoView({behavior:'smooth',block:'nearest'});
+  body.innerHTML='<div class="ldots"><span>▸</span><span>▸</span><span>▸</span></div>';
+  const s=getS(),m=getMdl(),v=getVar(),ps=getPS();
+  const chg=ps.filter(p=>workP[p.k]!==origP[p.k]);
+  const sc=calcScore(workP),g=gradeOf(sc);
+  const pr=`Samsung ${s.name} (${s.sub}) 파라미터 시뮬레이션 분석:
+모델: Galaxy ${v.v} (${m.yr}) — ${m.stl}
+파라미터: ${ps.map(p=>`${p.n}=${workP[p.k]??p.min}${p.u}${workP[p.k]!==origP[p.k]?'★':''}`).join(', ')}
+종합점수: ${sc}/100 — ${g.g}등급 / 변경항목: ${chg.length}개
+다음을 한국어 200자 이내로:
+1. 변경 파라미터의 실사용 영향
+2. ${s.name} 시리즈 내 포지션
+3. 핵심 강점·개선점`;
+  try{
+    const r=await fetch('https://api.anthropic.com/v1/messages',{method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:1000,
+        messages:[{role:'user',content:pr}]})});
+    const data=await r.json();
+    body.innerHTML=data.content.map(c=>c.text||'').join('').replace(/\n/g,'<br>');
+  }catch(e){body.innerHTML='⚠️ 분석 오류.';}
+}
+
+/* ═══════════════════════════════════════
+   CHAT
+═══════════════════════════════════════ */
+function addMsg(txt,role){
+  const el=document.getElementById('chatMsgs');
+  const d=document.createElement('div');
+  d.className='msg '+(role==='user'?'mu':'ma');
+  d.innerHTML=txt;el.appendChild(d);
+  el.scrollTop=el.scrollHeight;return d;
+}
+async function sendChat(){
+  const inp=document.getElementById('cin');
+  const msg=inp.value.trim();if(!msg)return;
+  inp.value='';addMsg(msg,'user');chatHist.push({role:'user',content:msg});
+  const btn=document.getElementById('sbtn');btn.disabled=true;
+  const ld=addMsg('<div class="ldots"><span>▸</span><span>▸</span><span>▸</span></div>','ai');
+  const s=getS(),m=getMdl(),v=getVar(),ps=getPS();
+  const sc=calcScore(workP);
+  const sys=`Samsung Galaxy 전 시리즈 전문 AI 에이전트.
+현재 컨텍스트: ${s.name} (${s.sub}) > Galaxy ${v.v} (${m.yr}) — ${m.stl}
+파라미터: ${ps.map(p=>`${p.n}=${workP[p.k]??p.min}${p.u}${workP[p.k]!==origP[p.k]?'*':''}`).join(', ')}
+점수: ${sc}/100 (${gradeOf(sc).g}등급)${m.isFuture?' | 미래 예측 모델':''}
+S·ZFold·ZFlip·A·M·F·XCover·Tab 전 시리즈 지식 보유.
+한국어, 간결·전문적으로 (200자 이내).`;
+  try{
+    const r=await fetch('https://api.anthropic.com/v1/messages',{method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:1000,
+        system:sys,messages:chatHist})});
+    const data=await r.json();
+    const reply=data.content.map(c=>c.text||'').join('');
+    chatHist.push({role:'assistant',content:reply});
+    ld.innerHTML=reply;
+    document.getElementById('chatMsgs').scrollTop=9999;
+  }catch(e){ld.innerHTML='⚠️ 오류가 발생했습니다.';}
+  btn.disabled=false;
+}
+function quickAsk(q){document.getElementById('cin').value=q;sendChat();}
+
+boot();
+</script>
+</body>
+</html>

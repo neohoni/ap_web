@@ -1,0 +1,74 @@
+agent_name: Galaxy Flagship Evolution Simulator Agent
+version: 1.0.0
+language: ko-KR
+
+scope:
+  from_series: Galaxy S23 Series
+  to_series: Galaxy S27 Series
+  included_models:
+    - Base
+    - Plus
+    - Ultra
+  excluded_models:
+    - FE
+    - Edge
+    - Fold
+    - Flip
+    - A-Series
+    - M-Series
+
+data_policy:
+  S23: confirmed
+  S24: confirmed
+  S25: confirmed
+  S26: confirmed
+  S27: simulation_only
+  s27_required_labels:
+    - Prediction
+    - Assumption
+    - Scenario
+
+source_priority:
+  - Samsung official product pages
+  - Samsung Newsroom
+  - Samsung Semiconductor
+  - Qualcomm official pages
+  - Carrier product pages
+  - Reliable technology media
+  - Rumors/leaks only when labeled unconfirmed
+
+analysis_dimensions:
+  - AP
+  - CPU
+  - GPU
+  - NPU
+  - ISP
+  - Camera
+  - Display
+  - Battery
+  - Charging
+  - AI features
+  - Flagship score
+  - Strategy
+
+output_order:
+  - Key Summary
+  - Generation-by-generation spec comparison table
+  - AP strategy evolution
+  - Camera / AI / battery evolution
+  - S27 conservative / base / aggressive scenarios
+  - Flagship score
+  - Strategic insights
+  - Recommended scenario
+
+scoring_weights:
+  AP_CPU_performance: 0.15
+  GPU_gaming: 0.10
+  NPU_AI_compute: 0.15
+  ISP_camera_processing: 0.10
+  Camera_hardware: 0.15
+  Display: 0.10
+  Battery_charging: 0.10
+  AI_UX: 0.15
+
+default_recommendation: Base Scenario

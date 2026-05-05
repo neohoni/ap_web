@@ -1,0 +1,806 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Galaxy S23–S27 파라미터 시뮬레이터</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=IBM+Plex+Sans+KR:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#08080e;--bg2:#101018;--bg3:#18182a;--bg4:#22223a;
+  --border:#252538;--border2:#353558;--border3:#454568;
+  --text:#ddddf0;--text2:#8888aa;--text3:#4a4a6a;
+  --accent:#5eead4;--accent2:#a78bfa;--accent3:#fb923c;
+  --glow-a:rgba(94,234,212,.12);--glow-b:rgba(167,139,250,.12);
+}
+body{background:var(--bg);color:var(--text);font-family:'IBM Plex Sans KR',sans-serif;min-height:100vh}
+h1,h2,h3,h4,.mono{font-family:'Syne',sans-serif}
+
+/* ── Scrollbar ── */
+::-webkit-scrollbar{width:4px;height:4px}
+::-webkit-scrollbar-track{background:transparent}
+::-webkit-scrollbar-thumb{background:var(--border3);border-radius:2px}
+
+/* ── Shell ── */
+.shell{display:grid;grid-template-rows:auto 1fr;min-height:100vh}
+.topbar{border-bottom:1px solid var(--border);padding:1rem 1.5rem;display:flex;align-items:center;justify-content:space-between;gap:1rem;flex-wrap:wrap}
+.logo{font-family:'Syne',sans-serif;font-weight:800;font-size:16px;display:flex;align-items:center;gap:.5rem}
+.logo-dot{width:8px;height:8px;border-radius:50%;background:linear-gradient(135deg,var(--accent),var(--accent2))}
+.version-badge{font-size:10px;padding:2px 8px;background:var(--bg3);border:1px solid var(--border2);border-radius:20px;color:var(--text2);letter-spacing:.5px}
+
+/* ── Timeline ── */
+.timeline-wrap{padding:.75rem 1.5rem;border-bottom:1px solid var(--border);overflow-x:auto}
+.timeline{display:flex;gap:.375rem;min-width:fit-content}
+.t-btn{padding:.45rem 1rem;border:1px solid var(--border2);background:transparent;border-radius:8px;color:var(--text2);font-family:'Syne',sans-serif;font-weight:700;font-size:13px;cursor:pointer;transition:all .25s;white-space:nowrap;display:flex;align-items:center;gap:.4rem}
+.t-btn:hover{border-color:var(--border3);color:var(--text)}
+.t-btn.active{background:linear-gradient(135deg,var(--accent),var(--accent2));border-color:transparent;color:#fff}
+.t-btn .t-year{font-size:10px;opacity:.7;font-weight:400}
+.t-btn.custom-tab{border-color:var(--accent3);color:var(--accent3)}
+.t-btn.custom-tab.active{background:linear-gradient(135deg,var(--accent3),#f43f5e)}
+
+/* ── Body layout ── */
+.body{display:grid;grid-template-columns:320px 1fr;height:calc(100vh - 100px);overflow:hidden}
+@media(max-width:800px){.body{grid-template-columns:1fr;height:auto;overflow:visible}}
+
+/* ── Left panel ── */
+.left-panel{border-right:1px solid var(--border);display:flex;flex-direction:column;overflow:hidden}
+.left-panel-inner{overflow-y:auto;flex:1;padding:1.25rem}
+
+/* ── Param section ── */
+.param-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:1rem}
+.param-header h3{font-size:11px;letter-spacing:2px;text-transform:uppercase;color:var(--text3);font-weight:600}
+.reset-btn{font-size:11px;padding:3px 10px;background:transparent;border:1px solid var(--border2);border-radius:6px;color:var(--text2);cursor:pointer;font-family:'IBM Plex Sans KR',sans-serif;transition:all .2s}
+.reset-btn:hover{border-color:var(--border3);color:var(--text)}
+
+.param-row{margin-bottom:1.1rem}
+.param-label-row{display:flex;align-items:center;justify-content:space-between;margin-bottom:.45rem}
+.param-name{font-size:12px;color:var(--text2);font-weight:500}
+.param-input-wrap{display:flex;align-items:center;gap:.5rem}
+.param-num{width:56px;background:var(--bg3);border:1px solid var(--border2);border-radius:6px;color:var(--text);font-family:'Syne',sans-serif;font-weight:700;font-size:13px;text-align:right;padding:3px 8px;outline:none;transition:border-color .2s}
+.param-num:focus{border-color:var(--accent)}
+.param-unit{font-size:11px;color:var(--text3);min-width:20px}
+.param-slider{width:100%;-webkit-appearance:none;appearance:none;height:4px;border-radius:2px;background:var(--bg4);outline:none;cursor:pointer}
+.param-slider::-webkit-slider-thumb{-webkit-appearance:none;appearance:none;width:14px;height:14px;border-radius:50%;background:linear-gradient(135deg,var(--accent),var(--accent2));cursor:pointer;border:2px solid var(--bg);box-shadow:0 0 6px var(--glow-a)}
+.param-slider::-moz-range-thumb{width:14px;height:14px;border-radius:50%;background:linear-gradient(135deg,var(--accent),var(--accent2));cursor:pointer;border:2px solid var(--bg)}
+.param-divider{height:1px;background:var(--border);margin:1rem 0}
+.param-tag{display:inline-block;font-size:9px;padding:1px 6px;border-radius:3px;margin-left:4px;font-weight:700;letter-spacing:.5px;vertical-align:middle}
+.tag-changed{background:rgba(94,234,212,.15);color:var(--accent);border:1px solid rgba(94,234,212,.3)}
+.tag-original{background:var(--bg4);color:var(--text3)}
+
+/* Simulate btn */
+.simulate-btn{width:100%;padding:.8rem;background:linear-gradient(135deg,var(--accent),var(--accent2));border:none;border-radius:10px;color:#fff;font-family:'Syne',sans-serif;font-weight:700;font-size:14px;cursor:pointer;transition:opacity .2s;letter-spacing:.5px;margin-top:.5rem}
+.simulate-btn:hover{opacity:.88}
+.simulate-btn:active{transform:scale(.99)}
+
+/* Score widget */
+.score-widget{background:var(--bg3);border:1px solid var(--border2);border-radius:12px;padding:1rem;margin-bottom:1rem;display:flex;align-items:center;gap:1rem}
+.score-ring{position:relative;width:64px;height:64px;flex-shrink:0}
+.score-ring svg{transform:rotate(-90deg)}
+.score-number{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-family:'Syne',sans-serif;font-weight:800;font-size:18px;color:var(--text)}
+.score-info{flex:1}
+.score-label{font-size:11px;color:var(--text3);letter-spacing:1px;text-transform:uppercase;margin-bottom:.2rem}
+.score-grade{font-family:'Syne',sans-serif;font-weight:700;font-size:22px}
+
+/* ── Right panel ── */
+.right-panel{display:flex;flex-direction:column;overflow:hidden}
+.right-inner{overflow-y:auto;flex:1;display:grid;grid-template-columns:1fr 1fr;gap:1rem;padding:1.25rem;align-content:start}
+@media(max-width:1000px){.right-inner{grid-template-columns:1fr}}
+
+/* Cards */
+.card{background:var(--bg2);border:1px solid var(--border);border-radius:14px;padding:1.1rem}
+.card-full{grid-column:1/-1}
+.card h4{font-size:10px;letter-spacing:2px;text-transform:uppercase;color:var(--text3);margin-bottom:1rem;font-weight:600}
+
+/* Bars */
+.bar-group{display:flex;flex-direction:column;gap:.6rem}
+.bar-row{display:flex;align-items:center;gap:.6rem}
+.bar-key{font-size:11px;color:var(--text2);width:58px;text-align:right;flex-shrink:0;letter-spacing:.3px}
+.bar-track{flex:1;height:5px;background:var(--bg4);border-radius:3px;overflow:visible;position:relative}
+.bar-orig{height:100%;border-radius:3px;background:var(--bg4);position:absolute;top:0;left:0;border:1px solid var(--border3);transition:width .5s ease}
+.bar-fill{height:100%;border-radius:3px;background:linear-gradient(90deg,var(--accent),var(--accent2));position:absolute;top:0;left:0;transition:width .5s cubic-bezier(.34,1.56,.64,1)}
+.bar-fill.decreased{background:linear-gradient(90deg,#f43f5e,var(--accent3))}
+.bar-fill.custom-fill{background:linear-gradient(90deg,var(--accent3),#f43f5e)}
+.bar-num{font-size:11px;color:var(--text2);width:28px;font-family:'Syne',sans-serif;font-weight:700}
+.bar-delta{font-size:10px;width:32px;text-align:right;font-weight:700;font-family:'Syne',sans-serif}
+.delta-up{color:var(--accent)}
+.delta-dn{color:#f43f5e}
+.delta-eq{color:var(--text3)}
+
+/* Spec grid */
+.spec-grid{display:grid;grid-template-columns:1fr 1fr;gap:.5rem}
+.spec-cell{background:var(--bg3);border-radius:8px;padding:.65rem .8rem}
+.spec-cell-label{font-size:10px;color:var(--text3);margin-bottom:.2rem;font-weight:500;text-transform:uppercase;letter-spacing:.5px}
+.spec-cell-val{font-size:12px;color:var(--text);font-weight:500;line-height:1.4}
+.spec-new{font-size:9px;background:rgba(94,234,212,.12);color:var(--accent);padding:1px 5px;border-radius:3px;margin-left:3px;font-weight:700;letter-spacing:.5px;border:1px solid rgba(94,234,212,.25)}
+
+/* Phone mini */
+.phone-mini{width:80px;height:160px;border-radius:16px;border:2px solid;display:flex;flex-direction:column;align-items:center;justify-content:center;margin:0 auto;position:relative;transition:all .4s}
+.phone-screen-mini{width:70%;height:62%;border-radius:8px;background:var(--bg);display:flex;align-items:center;justify-content:center;font-size:22px;border:1px solid var(--border)}
+
+/* ── AI Chat panel ── */
+.chat-panel{border-top:1px solid var(--border);display:flex;flex-direction:column;height:280px}
+.chat-header{padding:.75rem 1.25rem;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:.5rem;flex-shrink:0}
+.chat-title{font-family:'Syne',sans-serif;font-weight:700;font-size:13px;color:var(--text)}
+.ai-badge{font-size:9px;background:linear-gradient(135deg,var(--accent),var(--accent2));color:#fff;padding:2px 7px;border-radius:10px;font-weight:700;letter-spacing:.5px}
+.context-pill{margin-left:auto;font-size:10px;padding:2px 8px;background:var(--bg3);border:1px solid var(--border2);border-radius:10px;color:var(--text2)}
+.chat-body{flex:1;overflow-y:auto;padding:.75rem 1.25rem;display:flex;flex-direction:column;gap:.5rem}
+.msg{padding:.6rem .85rem;border-radius:12px;font-size:12px;line-height:1.65;max-width:82%}
+.msg-user{background:linear-gradient(135deg,rgba(94,234,212,.1),rgba(167,139,250,.1));border:1px solid rgba(94,234,212,.2);align-self:flex-end;color:var(--text)}
+.msg-ai{background:var(--bg3);border:1px solid var(--border);align-self:flex-start;color:var(--text2)}
+.chat-footer{padding:.6rem 1.25rem;border-top:1px solid var(--border);display:flex;gap:.5rem;flex-wrap:wrap;align-items:center;flex-shrink:0}
+.quick-row{display:flex;gap:.35rem;flex-wrap:wrap;width:100%;margin-bottom:.35rem}
+.qbtn{font-size:11px;padding:.3rem .65rem;background:var(--bg3);border:1px solid var(--border2);border-radius:6px;color:var(--text2);cursor:pointer;font-family:'IBM Plex Sans KR',sans-serif;transition:all .18s;white-space:nowrap}
+.qbtn:hover{border-color:var(--accent);color:var(--accent)}
+.chat-row{display:flex;gap:.4rem;width:100%}
+.chat-in{flex:1;background:var(--bg3);border:1px solid var(--border2);border-radius:8px;padding:.5rem .8rem;color:var(--text);font-size:12px;font-family:'IBM Plex Sans KR',sans-serif;outline:none;transition:border-color .2s}
+.chat-in:focus{border-color:var(--accent)}
+.chat-in::placeholder{color:var(--text3)}
+.send-btn{padding:.5rem 1rem;background:linear-gradient(135deg,var(--accent),var(--accent2));border:none;border-radius:8px;color:#fff;font-size:12px;font-weight:700;cursor:pointer;font-family:'Syne',sans-serif;white-space:nowrap;transition:opacity .2s}
+.send-btn:hover{opacity:.85}
+.send-btn:disabled{opacity:.35;cursor:not-allowed}
+
+/* Dots anim */
+.ldots span{animation:ld .7s infinite;display:inline-block}
+.ldots span:nth-child(2){animation-delay:.15s}
+.ldots span:nth-child(3){animation-delay:.3s}
+@keyframes ld{0%,80%,100%{opacity:.25;transform:translateY(0)}40%{opacity:1;transform:translateY(-2px)}}
+
+/* Diff highlight */
+.diff-added{background:rgba(94,234,212,.06);border-left:2px solid var(--accent);padding-left:.5rem}
+.diff-table{width:100%;font-size:11px;border-collapse:collapse}
+.diff-table th{color:var(--text3);font-weight:500;text-align:left;padding:.35rem .5rem;border-bottom:1px solid var(--border);font-size:10px;letter-spacing:.5px;text-transform:uppercase}
+.diff-table td{padding:.35rem .5rem;border-bottom:1px solid var(--border)}
+.diff-table tr:last-child td{border-bottom:none}
+.td-orig{color:var(--text3)}
+.td-cur{color:var(--text);font-weight:500}
+.td-delta-up{color:var(--accent);font-weight:700}
+.td-delta-dn{color:#f43f5e;font-weight:700}
+
+/* sim result */
+.sim-result{padding:.6rem .9rem;background:linear-gradient(135deg,rgba(94,234,212,.06),rgba(167,139,250,.06));border:1px solid rgba(94,234,212,.15);border-radius:10px;font-size:12px;color:var(--text2);line-height:1.5;margin-top:.75rem}
+.sim-result strong{color:var(--accent);font-weight:600}
+
+/* Evolution badge */
+.evo-item{display:flex;align-items:flex-start;gap:.5rem;padding:.45rem 0;border-bottom:1px solid var(--border);font-size:12px;color:var(--text2);line-height:1.5}
+.evo-item:last-child{border-bottom:none}
+.evo-dot{width:5px;height:5px;border-radius:50%;background:var(--accent);flex-shrink:0;margin-top:.35rem}
+.evo-dot.custom{background:var(--accent3)}
+
+@keyframes fadeUp{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:translateY(0)}}
+.fade-up{animation:fadeUp .3s ease forwards}
+</style>
+</head>
+<body>
+<div class="shell">
+
+  <!-- Topbar -->
+  <div class="topbar">
+    <div class="logo">
+      <div class="logo-dot"></div>
+      Galaxy Flagship 시뮬레이터
+    </div>
+    <div style="display:flex;align-items:center;gap:.5rem">
+      <span class="version-badge">파라미터 시뮬레이션 v2</span>
+      <span id="modifiedBadge" style="display:none;font-size:10px;padding:2px 8px;background:rgba(94,234,212,.1);border:1px solid rgba(94,234,212,.3);border-radius:20px;color:var(--accent);letter-spacing:.5px">● 수정됨</span>
+    </div>
+  </div>
+
+  <!-- Timeline -->
+  <div class="timeline-wrap">
+    <div class="timeline" id="timeline">
+      <button class="t-btn active" onclick="selectModel(0)" id="tb0">S23 <span class="t-year">2023</span></button>
+      <button class="t-btn" onclick="selectModel(1)" id="tb1">S24 <span class="t-year">2024</span></button>
+      <button class="t-btn" onclick="selectModel(2)" id="tb2">S25 <span class="t-year">2025</span></button>
+      <button class="t-btn" onclick="selectModel(3)" id="tb3">S26 <span class="t-year">2026</span></button>
+      <button class="t-btn" onclick="selectModel(4)" id="tb4">S27 <span class="t-year">2027</span></button>
+      <button class="t-btn custom-tab" onclick="selectModel(5)" id="tb5">⚙ 커스텀 모델</button>
+    </div>
+  </div>
+
+  <!-- Body -->
+  <div class="body">
+
+    <!-- ── Left: params ── -->
+    <div class="left-panel">
+      <div class="left-panel-inner">
+
+        <!-- Score -->
+        <div class="score-widget" id="scoreWidget">
+          <div class="score-ring">
+            <svg width="64" height="64" viewBox="0 0 64 64">
+              <circle cx="32" cy="32" r="26" fill="none" stroke="#252538" stroke-width="5"/>
+              <circle cx="32" cy="32" r="26" fill="none" stroke="url(#sg)" stroke-width="5"
+                stroke-linecap="round" stroke-dasharray="163.36" id="scoreCircle" stroke-dashoffset="163.36"/>
+              <defs>
+                <linearGradient id="sg" x1="0%" y1="0%" x2="100%" y2="0%">
+                  <stop offset="0%" stop-color="#5eead4"/>
+                  <stop offset="100%" stop-color="#a78bfa"/>
+                </linearGradient>
+              </defs>
+            </svg>
+            <div class="score-number" id="scoreNum">0</div>
+          </div>
+          <div class="score-info">
+            <div class="score-label">종합 점수</div>
+            <div class="score-grade" id="scoreGrade">—</div>
+            <div style="font-size:11px;color:var(--text3);margin-top:.2rem" id="scoreDesc">모델을 선택하세요</div>
+          </div>
+        </div>
+
+        <!-- Phone thumbnail -->
+        <div style="margin-bottom:1rem;text-align:center">
+          <div class="phone-mini" id="phoneMini" style="border-color:var(--border2)">
+            <div class="phone-screen-mini" id="phoneMiniScreen"><span id="phoneMiniEmoji">📱</span></div>
+          </div>
+          <div style="font-family:'Syne',sans-serif;font-weight:800;font-size:14px;margin-top:.6rem" id="miniModelName">Galaxy S23</div>
+          <div style="font-size:11px;color:var(--text2);margin-top:.15rem" id="miniStatus">— 출시 완료</div>
+        </div>
+
+        <div class="param-divider"></div>
+
+        <!-- Param controls -->
+        <div class="param-header">
+          <h3>파라미터 조정</h3>
+          <button class="reset-btn" onclick="resetParams()">초기화</button>
+        </div>
+
+        <div id="paramControls"></div>
+
+        <button class="simulate-btn" onclick="runSimulate()">▶ 시뮬레이션 실행</button>
+
+      </div>
+    </div>
+
+    <!-- ── Right: results ── -->
+    <div class="right-panel">
+      <div class="right-inner" id="rightInner">
+
+        <!-- Phone + bars -->
+        <div class="card">
+          <h4>성능 지수 비교</h4>
+          <div class="bar-group" id="barGroup"></div>
+        </div>
+
+        <!-- Diff table -->
+        <div class="card">
+          <h4>원본 vs 수정값</h4>
+          <table class="diff-table" id="diffTable">
+            <thead><tr><th>파라미터</th><th>원본</th><th>현재</th><th>변화</th></tr></thead>
+            <tbody id="diffBody"></tbody>
+          </table>
+        </div>
+
+        <!-- Specs -->
+        <div class="card">
+          <h4>핵심 스펙</h4>
+          <div class="spec-grid" id="specGrid"></div>
+        </div>
+
+        <!-- Evolution -->
+        <div class="card">
+          <h4>세대 진화 포인트</h4>
+          <div id="evoList"></div>
+        </div>
+
+        <!-- Sim result -->
+        <div class="card card-full" id="simResultCard" style="display:none">
+          <h4>시뮬레이션 결과</h4>
+          <div id="simResultBody"></div>
+        </div>
+
+      </div>
+
+      <!-- AI Chat -->
+      <div class="chat-panel">
+        <div class="chat-header">
+          <span class="chat-title">AI 에이전트</span>
+          <span class="ai-badge">CLAUDE</span>
+          <span class="context-pill" id="contextPill">Galaxy S23 컨텍스트</span>
+        </div>
+        <div class="chat-body" id="chatBody">
+          <div class="msg msg-ai">안녕하세요! 파라미터를 조정하고 <strong>시뮬레이션 실행</strong>을 누르면 맞춤 분석을 제공합니다. 지금 바로 질문도 가능해요 📱</div>
+        </div>
+        <div class="chat-footer">
+          <div class="quick-row" id="quickRow"></div>
+          <div class="chat-row">
+            <input class="chat-in" id="chatIn" placeholder="파라미터 변경 시 어떤 영향이 있나요?" onkeydown="if(event.key==='Enter')sendChat()" />
+            <button class="send-btn" id="sendBtn" onclick="sendChat()">전송 →</button>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<script>
+/* ═══════════════════════════════════════════
+   DATA
+═══════════════════════════════════════════ */
+const PARAMS_DEF = [
+  {key:'cpu',    label:'CPU 성능',   unit:'점',  min:30, max:100, step:1,  category:'성능'},
+  {key:'gpu',    label:'GPU 성능',   unit:'점',  min:30, max:100, step:1,  category:'성능'},
+  {key:'ai',     label:'AI 성능',    unit:'점',  min:20, max:100, step:1,  category:'성능'},
+  {key:'camera', label:'카메라 화소', unit:'MP',  min:12, max:200, step:1,  category:'카메라'},
+  {key:'zoom',   label:'망원 배율',  unit:'x',   min:2,  max:10,  step:0.5,category:'카메라'},
+  {key:'battery',label:'배터리',     unit:'mAh', min:3000,max:6000,step:50, category:'배터리'},
+  {key:'charge', label:'유선 충전',  unit:'W',   min:15, max:100, step:5,  category:'배터리'},
+  {key:'ram',    label:'RAM',        unit:'GB',  min:6,  max:24,  step:2,  category:'SoC'},
+  {key:'display',label:'디스플레이', unit:'점',  min:50, max:100, step:1,  category:'디스플레이'},
+  {key:'price',  label:'출시가격',   unit:'만원',min:80, max:250, step:5,  category:'가격'},
+];
+
+const MODELS = [
+  {
+    id:'S23', year:'2023', emoji:'🔵', color:'#5eead4',
+    status:'출시 완료', statusClass:'#5eead4',
+    params:{cpu:62,gpu:58,ai:40,camera:50,zoom:3,battery:3900,charge:25,ram:8,display:70,price:99},
+    specs:[
+      {l:'디스플레이',v:'6.1" AMOLED 2X 120Hz',n:false},
+      {l:'프로세서',v:'Snapdragon 8 Gen 2',n:false},
+      {l:'OS',v:'Android 13 / One UI 5',n:false},
+      {l:'Wi-Fi / BT',v:'Wi-Fi 6E / BT 5.3',n:false},
+    ],
+    evolution:['Snapdragon 8 Gen 2 — 갤럭시 전용 OC','Armor Aluminum 2 & Victus 2','Wi-Fi 6E · Bluetooth 5.3 첫 탑재','200MP 지원 카메라 아키텍처 (Ultra)'],
+  },
+  {
+    id:'S24', year:'2024', emoji:'🟣', color:'#a78bfa',
+    status:'출시 완료', statusClass:'#a78bfa',
+    params:{cpu:72,gpu:70,ai:72,camera:50,zoom:3,battery:4000,charge:25,ram:8,display:75,price:109},
+    specs:[
+      {l:'디스플레이',v:'6.2" AMOLED 2X 120Hz',n:false},
+      {l:'프로세서',v:'Snapdragon 8 Gen 3',n:true},
+      {l:'Galaxy AI',v:'Circle to Search · 통역',n:true},
+      {l:'업데이트',v:'7년 OS 보장',n:true},
+    ],
+    evolution:['Galaxy AI 최초 탑재 (온디바이스+클라우드)','Circle to Search 도입','실시간 통화 통역','7년 OS·보안 업데이트 보장'],
+  },
+  {
+    id:'S25', year:'2025', emoji:'🟢', color:'#4ade80',
+    status:'출시 완료', statusClass:'#4ade80',
+    params:{cpu:85,gpu:83,ai:88,camera:50,zoom:3,battery:4000,charge:25,ram:12,display:78,price:115},
+    specs:[
+      {l:'디스플레이',v:'6.2" AMOLED 2X 120Hz',n:false},
+      {l:'프로세서',v:'Snapdragon 8 Elite',n:true},
+      {l:'Galaxy AI 2.0',v:'에이전트형 자동화',n:true},
+      {l:'OS',v:'Android 15 / One UI 7',n:true},
+    ],
+    evolution:['Snapdragon 8 Elite — CPU +40% / GPU +37%','Galaxy AI 2.0 에이전트형 앱 간 자동화','RAM 12GB로 상향','One UI 7 — Now Bar 잠금화면 위젯'],
+  },
+  {
+    id:'S26', year:'2026', emoji:'🟠', color:'#fb923c',
+    status:'루머 / 예상', statusClass:'#fb923c',
+    params:{cpu:92,gpu:90,ai:94,camera:200,zoom:5,battery:4200,charge:45,ram:12,display:86,price:125},
+    specs:[
+      {l:'디스플레이',v:'6.2" AMOLED 3세대 (예상)',n:true},
+      {l:'프로세서',v:'Snapdragon 8 Elite Gen 2',n:true},
+      {l:'카메라',v:'200MP 메인 f/1.7',n:true},
+      {l:'Wi-Fi',v:'Wi-Fi 7 예상',n:true},
+    ],
+    evolution:['200MP 메인 카메라 표준 라인 탑재 예상','완전 온디바이스 LLM 구동','AMOLED 3세대 — 전력 40% 절감','Snapdragon 8 Elite Gen 2 NPU 2배'],
+  },
+  {
+    id:'S27', year:'2027', emoji:'🔴', color:'#f43f5e',
+    status:'미래 전망', statusClass:'#f43f5e',
+    params:{cpu:99,gpu:97,ai:99,camera:200,zoom:10,battery:4500,charge:65,ram:16,display:95,price:140},
+    specs:[
+      {l:'디스플레이',v:'Micro-LED AMOLED (전망)',n:true},
+      {l:'프로세서',v:'Snapdragon 8 Gen 5 (전망)',n:true},
+      {l:'배터리',v:'고체 배터리 4,500mAh',n:true},
+      {l:'AI',v:'자율형 멀티모달 AI',n:true},
+    ],
+    evolution:['고체 배터리 — 수명 2배, 안전성 극대화','Micro-LED AMOLED 하이브리드 패널','자율형 AI 에이전트 — 복합 작업 독립 수행','광학 가변 줌 1x–10x 무단 전환'],
+  },
+  {
+    id:'커스텀', year:'MY', emoji:'⚙️', color:'#fb923c',
+    status:'사용자 정의', statusClass:'#fb923c',
+    params:{cpu:80,gpu:78,ai:80,camera:100,zoom:5,battery:4500,charge:45,ram:12,display:80,price:120},
+    specs:[
+      {l:'이름',v:'나만의 Galaxy',n:false},
+      {l:'출시',v:'사용자 설정',n:false},
+      {l:'카테고리',v:'커스텀 플래그십',n:false},
+      {l:'포지션',v:'S 시리즈 기반',n:false},
+    ],
+    evolution:['파라미터를 직접 조정하여 원하는 스펙을 정의하세요','시뮬레이션 실행으로 AI 심층 분석을 받을 수 있습니다','기존 모델과의 성능 비교가 자동으로 표시됩니다'],
+    isCustom:true,
+  },
+];
+
+let currentIdx = 0;
+let workingParams = {};   // live values (modified by sliders)
+let originalParams = {};  // snapshot of model's base values
+let chatHistory = [];
+let simCount = 0;
+
+/* ═══════════════════════════════════════════
+   INIT & SELECT
+═══════════════════════════════════════════ */
+function selectModel(i){
+  currentIdx = i;
+  document.querySelectorAll('.t-btn').forEach((b,j)=>b.classList.toggle('active',j===i));
+  const m = MODELS[i];
+  originalParams = {...m.params};
+  workingParams = {...m.params};
+  chatHistory = [];
+  document.getElementById('contextPill').textContent = 'Galaxy '+m.id+' 컨텍스트';
+  buildParamControls();
+  refreshAll(false);
+}
+
+/* ═══════════════════════════════════════════
+   PARAM CONTROLS
+═══════════════════════════════════════════ */
+function buildParamControls(){
+  const m = MODELS[currentIdx];
+  const wrap = document.getElementById('paramControls');
+  // group by category
+  const cats = {};
+  PARAMS_DEF.forEach(p=>{
+    if(!cats[p.category]) cats[p.category]=[];
+    cats[p.category].push(p);
+  });
+  let html='';
+  Object.entries(cats).forEach(([cat,params])=>{
+    html+=`<div style="font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:1.5px;font-weight:600;margin:.85rem 0 .45rem">${cat}</div>`;
+    params.forEach(p=>{
+      const v = workingParams[p.key];
+      html+=`<div class="param-row" id="prow_${p.key}">
+        <div class="param-label-row">
+          <span class="param-name">${p.label} <span class="param-tag tag-original" id="ptag_${p.key}">원본</span></span>
+          <div class="param-input-wrap">
+            <input type="number" class="param-num" id="pnum_${p.key}" value="${v}"
+              min="${p.min}" max="${p.max}" step="${p.step}"
+              onchange="onNumChange('${p.key}',this.value)"
+              oninput="onNumChange('${p.key}',this.value)" />
+            <span class="param-unit">${p.unit}</span>
+          </div>
+        </div>
+        <input type="range" class="param-slider" id="pslider_${p.key}"
+          min="${p.min}" max="${p.max}" step="${p.step}" value="${v}"
+          oninput="onSliderChange('${p.key}',this.value)" />
+      </div>`;
+    });
+  });
+  wrap.innerHTML=html;
+}
+
+function onSliderChange(key,val){
+  val = parseFloat(val);
+  workingParams[key]=val;
+  const num=document.getElementById('pnum_'+key);
+  if(num) num.value=val;
+  updateParamTag(key);
+  refreshAll(true);
+}
+
+function onNumChange(key,val){
+  const p=PARAMS_DEF.find(d=>d.key===key);
+  if(!p) return;
+  val=Math.min(p.max,Math.max(p.min,parseFloat(val)||p.min));
+  workingParams[key]=val;
+  const sl=document.getElementById('pslider_'+key);
+  if(sl) sl.value=val;
+  updateParamTag(key);
+  refreshAll(true);
+}
+
+function updateParamTag(key){
+  const tag=document.getElementById('ptag_'+key);
+  if(!tag) return;
+  const changed = workingParams[key]!==originalParams[key];
+  tag.className='param-tag '+(changed?'tag-changed':'tag-original');
+  tag.textContent=changed?'수정됨':'원본';
+  const anyChanged=PARAMS_DEF.some(p=>workingParams[p.key]!==originalParams[p.key]);
+  document.getElementById('modifiedBadge').style.display=anyChanged?'inline-block':'none';
+}
+
+function resetParams(){
+  workingParams={...originalParams};
+  PARAMS_DEF.forEach(p=>{
+    const sl=document.getElementById('pslider_'+p.key);
+    const num=document.getElementById('pnum_'+p.key);
+    if(sl) sl.value=originalParams[p.key];
+    if(num) num.value=originalParams[p.key];
+    updateParamTag(p.key);
+  });
+  refreshAll(false);
+  document.getElementById('simResultCard').style.display='none';
+  document.getElementById('modifiedBadge').style.display='none';
+}
+
+/* ═══════════════════════════════════════════
+   SCORE
+═══════════════════════════════════════════ */
+function calcScore(params){
+  const w={cpu:.2,gpu:.15,ai:.2,camera:.12,zoom:.05,battery:.08,charge:.05,ram:.07,display:.08,price:0};
+  // normalize each
+  let s=0;
+  PARAMS_DEF.forEach(p=>{
+    if(!w[p.key]) return;
+    const norm=(params[p.key]-p.min)/(p.max-p.min)*100;
+    s+=norm*w[p.key];
+  });
+  // price inverse (cheaper = better score)
+  const priceNorm=(PARAMS_DEF.find(d=>d.key==='price').max-params.price)/(PARAMS_DEF.find(d=>d.key==='price').max-PARAMS_DEF.find(d=>d.key==='price').min)*100;
+  s+=priceNorm*0;
+  return Math.round(s);
+}
+
+function scoreGrade(s){
+  if(s>=90) return{grade:'S+',desc:'차세대 플래그십 수준',color:'#5eead4'};
+  if(s>=80) return{grade:'S',desc:'최상급 플래그십',color:'#a78bfa'};
+  if(s>=70) return{grade:'A',desc:'고성능 플래그십',color:'#4ade80'};
+  if(s>=60) return{grade:'B',desc:'준수한 플래그십',color:'#fb923c'};
+  return{grade:'C',desc:'기본 플래그십',color:'#888'};
+}
+
+function updateScore(){
+  const s=calcScore(workingParams);
+  const g=scoreGrade(s);
+  document.getElementById('scoreNum').textContent=s;
+  document.getElementById('scoreGrade').textContent=g.grade;
+  document.getElementById('scoreGrade').style.color=g.color;
+  document.getElementById('scoreDesc').textContent=g.desc;
+  const circ=163.36;
+  const offset=circ-(circ*s/100);
+  document.getElementById('scoreCircle').style.strokeDashoffset=offset;
+}
+
+/* ═══════════════════════════════════════════
+   BARS
+═══════════════════════════════════════════ */
+const BAR_KEYS=[
+  {key:'cpu',label:'CPU'},
+  {key:'gpu',label:'GPU'},
+  {key:'ai',label:'AI'},
+  {key:'display',label:'화면'},
+  {key:'camera',label:'카메라',norm:true,min:12,max:200},
+  {key:'battery',label:'배터리',norm:true,min:3000,max:6000},
+  {key:'ram',label:'RAM',norm:true,min:6,max:24},
+];
+
+function normVal(key,val){
+  const p=PARAMS_DEF.find(d=>d.key===key);
+  if(!p) return val;
+  return Math.round((val-p.min)/(p.max-p.min)*100);
+}
+
+function buildBars(){
+  const bg=document.getElementById('barGroup');
+  bg.innerHTML='';
+  BAR_KEYS.forEach(b=>{
+    const orig=normVal(b.key,originalParams[b.key]);
+    const cur=normVal(b.key,workingParams[b.key]);
+    const delta=cur-orig;
+    const deltaStr=delta>0?'+'+delta:delta===0?'—':delta;
+    const deltaClass=delta>0?'delta-up':delta<0?'delta-dn':'delta-eq';
+    bg.innerHTML+=`<div class="bar-row">
+      <div class="bar-key">${b.label}</div>
+      <div class="bar-track" style="height:5px">
+        <div class="bar-orig" id="bo_${b.key}" style="width:${orig}%"></div>
+        <div class="bar-fill ${cur<orig?'decreased':''}" id="bf_${b.key}" style="width:0%"></div>
+      </div>
+      <div class="bar-num">${workingParams[b.key]}</div>
+      <div class="bar-delta ${deltaClass}">${deltaStr}</div>
+    </div>`;
+  });
+  setTimeout(()=>{
+    BAR_KEYS.forEach(b=>{
+      const cur=normVal(b.key,workingParams[b.key]);
+      const el=document.getElementById('bf_'+b.key);
+      if(el) el.style.width=cur+'%';
+    });
+  },30);
+}
+
+/* ═══════════════════════════════════════════
+   DIFF TABLE
+═══════════════════════════════════════════ */
+function buildDiffTable(){
+  const tbody=document.getElementById('diffBody');
+  let rows='';
+  PARAMS_DEF.forEach(p=>{
+    const orig=originalParams[p.key];
+    const cur=workingParams[p.key];
+    const delta=cur-orig;
+    const deltaStr=delta>0?'+'+delta:delta===0?'—':''+delta;
+    const deltaClass=delta>0?'td-delta-up':delta<0?'td-delta-dn':'';
+    const rowClass=delta!==0?'diff-added':'';
+    rows+=`<tr class="${rowClass}">
+      <td class="td-key">${p.label}</td>
+      <td class="td-orig">${orig} ${p.unit}</td>
+      <td class="td-cur">${cur} ${p.unit}</td>
+      <td class="${deltaClass}">${deltaStr}</td>
+    </tr>`;
+  });
+  tbody.innerHTML=rows;
+}
+
+/* ═══════════════════════════════════════════
+   PHONE + SPECS + EVO
+═══════════════════════════════════════════ */
+function updatePhone(){
+  const m=MODELS[currentIdx];
+  document.getElementById('phoneMini').style.borderColor=m.color+'88';
+  document.getElementById('phoneMiniScreen').style.background=`linear-gradient(135deg,${m.color}18,${m.color}28)`;
+  document.getElementById('phoneMiniEmoji').textContent=m.emoji;
+  document.getElementById('miniModelName').textContent='Galaxy '+m.id;
+  document.getElementById('miniStatus').textContent='— '+m.status;
+}
+
+function buildSpecs(){
+  const m=MODELS[currentIdx];
+  const sg=document.getElementById('specGrid');
+  sg.innerHTML=m.specs.map(s=>`<div class="spec-cell fade-up">
+    <div class="spec-cell-label">${s.l}</div>
+    <div class="spec-cell-val">${s.v}${s.n?'<span class="spec-new">NEW</span>':''}</div>
+  </div>`).join('');
+}
+
+function buildEvo(){
+  const m=MODELS[currentIdx];
+  const el=document.getElementById('evoList');
+  el.innerHTML=m.evolution.map((e,i)=>`<div class="evo-item fade-up" style="animation-delay:${i*.05}s">
+    <div class="evo-dot ${m.isCustom?'custom':''}"></div>${e}
+  </div>`).join('');
+}
+
+/* ═══════════════════════════════════════════
+   QUICK BUTTONS
+═══════════════════════════════════════════ */
+function buildQuickBtns(){
+  const m=MODELS[currentIdx];
+  const qs=m.isCustom
+    ?['이 스펙의 강점과 약점은?','최적 가격대 분석','어떤 사용자에게 적합한가?','S25와 비교해줘']
+    :['이 모델의 핵심 차별점은?','전 세대 대비 성능 향상','카메라 실력 분석','현재 파라미터로 재평가해줘'];
+  document.getElementById('quickRow').innerHTML=qs.map(q=>`<button class="qbtn" onclick="quickAsk('${q}')">${q}</button>`).join('');
+}
+
+/* ═══════════════════════════════════════════
+   REFRESH ALL
+═══════════════════════════════════════════ */
+function refreshAll(fromSlider){
+  updateScore();
+  buildBars();
+  buildDiffTable();
+  updatePhone();
+  if(!fromSlider){
+    buildSpecs();
+    buildEvo();
+    buildQuickBtns();
+  }
+}
+
+/* ═══════════════════════════════════════════
+   SIMULATE
+═══════════════════════════════════════════ */
+async function runSimulate(){
+  simCount++;
+  const card=document.getElementById('simResultCard');
+  const body=document.getElementById('simResultBody');
+  card.style.display='block';
+  card.scrollIntoView({behavior:'smooth',block:'nearest'});
+  body.innerHTML=`<div class="sim-result"><div class="ldots"><span>●</span><span>●</span><span>●</span></div> 시뮬레이션 분석 중...</div>`;
+
+  const m=MODELS[currentIdx];
+  const changed=PARAMS_DEF.filter(p=>workingParams[p.key]!==originalParams[p.key]);
+  const score=calcScore(workingParams);
+  const grade=scoreGrade(score);
+
+  const prompt=`다음 Galaxy ${m.id} 파라미터 시뮬레이션을 분석해주세요.
+
+원본 스펙:
+${PARAMS_DEF.map(p=>`${p.label}: ${originalParams[p.key]} ${p.unit}`).join('\n')}
+
+수정된 스펙:
+${PARAMS_DEF.map(p=>`${p.label}: ${workingParams[p.key]} ${p.unit}${workingParams[p.key]!==originalParams[p.key]?' ← 변경됨':''}`).join('\n')}
+
+변경 항목 수: ${changed.length}개
+종합 점수: ${score}/100 (${grade.grade} 등급)
+
+다음을 분석해주세요:
+1. 변경된 파라미터가 실제 사용 경험에 미치는 영향
+2. 이 스펙으로 Galaxy S 시리즈 중 어느 세대에 가장 가까운지
+3. 가장 뛰어난 점과 개선이 필요한 점
+4. 종합 평가
+
+간결하고 전문적으로, 300자 이내로 한국어 답변.`;
+
+  try{
+    const res=await fetch('https://api.anthropic.com/v1/messages',{
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({
+        model:'claude-sonnet-4-20250514',
+        max_tokens:1000,
+        messages:[{role:'user',content:prompt}]
+      })
+    });
+    const data=await res.json();
+    const reply=data.content.map(c=>c.text||'').join('');
+    body.innerHTML=`<div class="sim-result">${reply.replace(/\n/g,'<br>')}</div>`;
+    addMsg('[시뮬레이션 #'+simCount+' 분석 완료] '+reply.slice(0,80)+'...','ai');
+    chatHistory.push({role:'assistant',content:reply});
+  }catch(e){
+    body.innerHTML=`<div class="sim-result">⚠️ 분석 오류. 다시 시도해주세요.</div>`;
+  }
+}
+
+/* ═══════════════════════════════════════════
+   CHAT
+═══════════════════════════════════════════ */
+function addMsg(txt,role){
+  const el=document.getElementById('chatBody');
+  const div=document.createElement('div');
+  div.className='msg msg-'+role;
+  div.innerHTML=txt;
+  el.appendChild(div);
+  el.scrollTop=el.scrollHeight;
+  return div;
+}
+
+async function sendChat(){
+  const inp=document.getElementById('chatIn');
+  const msg=inp.value.trim();
+  if(!msg) return;
+  inp.value='';
+  addMsg(msg,'user');
+  chatHistory.push({role:'user',content:msg});
+
+  const btn=document.getElementById('sendBtn');
+  btn.disabled=true;
+  const loading=addMsg('<div class="ldots"><span>●</span><span>●</span><span>●</span></div>','ai');
+
+  const m=MODELS[currentIdx];
+  const changed=PARAMS_DEF.filter(p=>workingParams[p.key]!==originalParams[p.key]);
+  const score=calcScore(workingParams);
+
+  const system=`당신은 Samsung Galaxy 플래그십 시리즈 전문 AI 에이전트입니다.
+
+현재 모델: Galaxy ${m.id} (${m.year}) — ${m.status}
+
+[현재 파라미터]
+${PARAMS_DEF.map(p=>`${p.label}: ${workingParams[p.key]} ${p.unit}${workingParams[p.key]!==originalParams[p.key]?' (수정됨, 원본: '+originalParams[p.key]+p.unit+')':''}`).join('\n')}
+
+[종합 점수] ${score}/100 — ${scoreGrade(score).grade} 등급
+[변경된 항목] ${changed.length > 0 ? changed.map(p=>p.label).join(', ') : '없음 (원본 유지)'}
+
+S23~S27 전체 라인업 맥락 및 위 파라미터를 기반으로 답변하세요.
+한국어로 답변하되 전문적이고 간결하게 (200자 이내).
+${m.status!=='출시 완료'?' 미확정 모델임을 고려하세요.':''}`;
+
+  try{
+    const res=await fetch('https://api.anthropic.com/v1/messages',{
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({
+        model:'claude-sonnet-4-20250514',
+        max_tokens:1000,
+        system,
+        messages:chatHistory,
+      })
+    });
+    const data=await res.json();
+    const reply=data.content.map(c=>c.text||'').join('');
+    chatHistory.push({role:'assistant',content:reply});
+    loading.innerHTML=reply;
+    document.getElementById('chatBody').scrollTop=9999;
+  }catch(e){
+    loading.innerHTML='⚠️ 연결 오류가 발생했습니다.';
+  }
+  btn.disabled=false;
+}
+
+function quickAsk(q){
+  document.getElementById('chatIn').value=q;
+  sendChat();
+}
+
+/* ═══════════════════════════════════════════
+   BOOT
+═══════════════════════════════════════════ */
+selectModel(0);
+</script>
+</body>
+</html>

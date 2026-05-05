@@ -1,0 +1,449 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Galaxy S23–S27 플래그십 진화 시뮬레이션</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#0a0a0f;
+  --bg2:#111118;
+  --bg3:#1a1a24;
+  --border:#2a2a3a;
+  --border2:#3a3a50;
+  --text:#e8e8f0;
+  --text2:#9090b0;
+  --text3:#5a5a7a;
+  --accent:#4fc3f7;
+  --accent2:#7c4dff;
+  --glow:rgba(79,195,247,0.15);
+}
+body{background:var(--bg);color:var(--text);font-family:'DM Sans',sans-serif;min-height:100vh;overflow-x:hidden}
+h1,h2,h3,h4{font-family:'Syne',sans-serif}
+
+/* Layout */
+.container{max-width:1100px;margin:0 auto;padding:2rem 1.5rem}
+header{text-align:center;padding:3rem 0 2rem}
+header .eyebrow{font-size:11px;letter-spacing:3px;text-transform:uppercase;color:var(--accent);font-weight:500;margin-bottom:1rem}
+header h1{font-size:clamp(2rem,5vw,3.5rem);font-weight:800;background:linear-gradient(135deg,#e8e8f0 30%,#4fc3f7);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;line-height:1.1}
+header p{color:var(--text2);margin-top:1rem;font-size:15px}
+
+/* Timeline nav */
+.timeline{display:flex;align-items:center;gap:0;margin:2.5rem 0;position:relative;background:var(--bg2);border:1px solid var(--border);border-radius:16px;padding:6px;overflow:hidden}
+.timeline-btn{flex:1;padding:.75rem .5rem;border:none;background:transparent;cursor:pointer;border-radius:12px;transition:all .3s ease;font-family:'Syne',sans-serif;font-weight:700;font-size:15px;color:var(--text2);position:relative;z-index:1}
+.timeline-btn.active{color:#fff;background:linear-gradient(135deg,#4fc3f7,#7c4dff)}
+.timeline-btn:hover:not(.active){color:var(--text);background:var(--bg3)}
+.timeline-indicator{position:absolute;top:6px;bottom:6px;background:linear-gradient(135deg,#4fc3f7,#7c4dff);border-radius:12px;transition:all .4s cubic-bezier(.34,1.56,.64,1);z-index:0}
+
+/* Main grid */
+.main-grid{display:grid;grid-template-columns:280px 1fr;gap:1.5rem;align-items:start}
+@media(max-width:700px){.main-grid{grid-template-columns:1fr}}
+
+/* Phone visual */
+.phone-panel{background:var(--bg2);border:1px solid var(--border);border-radius:20px;padding:1.5rem;text-align:center;position:sticky;top:1rem}
+.phone-frame{width:140px;height:280px;margin:0 auto 1.5rem;position:relative}
+.phone-body{width:100%;height:100%;border-radius:24px;background:var(--bg3);border:2px solid var(--border2);display:flex;flex-direction:column;align-items:center;justify-content:center;position:relative;overflow:hidden;transition:all .5s ease}
+.phone-body::before{content:'';position:absolute;inset:0;opacity:.05;background:repeating-linear-gradient(45deg,#4fc3f7,#4fc3f7 1px,transparent 1px,transparent 8px)}
+.phone-screen{width:78%;height:72%;border-radius:14px;background:var(--bg);display:flex;align-items:center;justify-content:center;font-size:28px;border:1px solid var(--border);position:relative;overflow:hidden;transition:all .4s ease}
+.phone-screen::after{content:'';position:absolute;inset:0;background:linear-gradient(135deg,rgba(79,195,247,.08),rgba(124,77,255,.08))}
+.phone-notch{position:absolute;top:12px;width:40px;height:8px;background:var(--border2);border-radius:4px}
+.phone-home{position:absolute;bottom:10px;width:40px;height:4px;background:var(--border2);border-radius:2px;transition:all .3s}
+.model-name{font-family:'Syne',sans-serif;font-weight:800;font-size:20px;color:var(--text);margin-bottom:.25rem}
+.model-year{font-size:12px;color:var(--accent);letter-spacing:2px;font-weight:500}
+.status-badge{display:inline-flex;align-items:center;gap:5px;margin-top:.75rem;padding:4px 12px;border-radius:20px;font-size:11px;font-weight:500;letter-spacing:.5px}
+.status-confirmed{background:rgba(79,195,247,.1);color:var(--accent);border:1px solid rgba(79,195,247,.3)}
+.status-rumored{background:rgba(124,77,255,.1);color:#b39ddb;border:1px solid rgba(124,77,255,.3)}
+.status-future{background:rgba(255,183,77,.1);color:#ffb74d;border:1px solid rgba(255,183,77,.3)}
+
+/* Specs panel */
+.specs-panel{display:flex;flex-direction:column;gap:1rem}
+.spec-section{background:var(--bg2);border:1px solid var(--border);border-radius:20px;padding:1.5rem}
+.spec-section h3{font-size:11px;letter-spacing:2px;text-transform:uppercase;color:var(--text3);margin-bottom:1.25rem;font-weight:600}
+.spec-grid{display:grid;grid-template-columns:1fr 1fr;gap:.75rem}
+.spec-item{background:var(--bg3);border-radius:12px;padding:.85rem 1rem}
+.spec-label{font-size:11px;color:var(--text3);margin-bottom:.35rem;font-weight:500;letter-spacing:.5px;text-transform:uppercase}
+.spec-value{font-size:13px;color:var(--text);font-weight:500;line-height:1.4}
+.spec-highlight{color:var(--accent);font-weight:600}
+.spec-new{display:inline-block;font-size:9px;background:rgba(79,195,247,.15);color:var(--accent);padding:1px 6px;border-radius:4px;margin-left:4px;font-weight:700;letter-spacing:.5px}
+
+/* Evolution highlight */
+.evolution-tag{display:flex;align-items:center;gap:8px;padding:.6rem 1rem;background:rgba(79,195,247,.05);border:1px solid rgba(79,195,247,.2);border-radius:10px;font-size:13px;color:var(--text2);margin-bottom:.5rem}
+.evolution-tag .dot{width:6px;height:6px;border-radius:50%;background:var(--accent);flex-shrink:0}
+
+/* AI Chat */
+.chat-section{background:var(--bg2);border:1px solid var(--border);border-radius:20px;padding:1.5rem;margin-top:1.5rem}
+.chat-section h3{font-family:'Syne',sans-serif;font-size:15px;font-weight:700;margin-bottom:1rem;color:var(--text);display:flex;align-items:center;gap:8px}
+.chat-badge{font-size:10px;background:linear-gradient(135deg,#4fc3f7,#7c4dff);color:#fff;padding:2px 8px;border-radius:10px;font-weight:600;letter-spacing:.5px}
+.chat-messages{max-height:280px;overflow-y:auto;display:flex;flex-direction:column;gap:.75rem;margin-bottom:1rem;padding-right:.25rem}
+.chat-messages::-webkit-scrollbar{width:3px}
+.chat-messages::-webkit-scrollbar-thumb{background:var(--border2);border-radius:2px}
+.msg{padding:.75rem 1rem;border-radius:14px;font-size:13px;line-height:1.6;max-width:90%}
+.msg-user{background:linear-gradient(135deg,rgba(79,195,247,.15),rgba(124,77,255,.15));border:1px solid rgba(79,195,247,.2);align-self:flex-end;color:var(--text)}
+.msg-ai{background:var(--bg3);border:1px solid var(--border);align-self:flex-start;color:var(--text2)}
+.msg-ai strong{color:var(--accent);font-weight:600}
+.chat-input-row{display:flex;gap:.5rem}
+.chat-input{flex:1;background:var(--bg3);border:1px solid var(--border);border-radius:10px;padding:.6rem .9rem;color:var(--text);font-size:13px;font-family:'DM Sans',sans-serif;outline:none;transition:border-color .2s}
+.chat-input::placeholder{color:var(--text3)}
+.chat-input:focus{border-color:var(--accent)}
+.chat-send{padding:.6rem 1.1rem;background:linear-gradient(135deg,#4fc3f7,#7c4dff);border:none;border-radius:10px;color:#fff;font-size:13px;font-weight:600;cursor:pointer;font-family:'Syne',sans-serif;transition:opacity .2s;white-space:nowrap}
+.chat-send:hover{opacity:.85}
+.chat-send:disabled{opacity:.4;cursor:not-allowed}
+.quick-btns{display:flex;flex-wrap:wrap;gap:.4rem;margin-bottom:.75rem}
+.quick-btn{padding:.35rem .75rem;background:var(--bg3);border:1px solid var(--border);border-radius:8px;color:var(--text2);font-size:12px;cursor:pointer;transition:all .2s;font-family:'DM Sans',sans-serif}
+.quick-btn:hover{border-color:var(--accent);color:var(--accent)}
+
+/* Bar comparison */
+.bar-grid{display:flex;flex-direction:column;gap:.6rem}
+.bar-row{display:flex;align-items:center;gap:.75rem}
+.bar-label{font-size:11px;color:var(--text3);width:70px;text-align:right;flex-shrink:0;font-weight:500;text-transform:uppercase;letter-spacing:.4px}
+.bar-track{flex:1;height:6px;background:var(--bg3);border-radius:3px;overflow:hidden}
+.bar-fill{height:100%;border-radius:3px;background:linear-gradient(90deg,#4fc3f7,#7c4dff);transition:width .6s cubic-bezier(.34,1.56,.64,1)}
+.bar-val{font-size:11px;color:var(--text2);width:36px;font-weight:500}
+
+/* Loading dots */
+.loading-dots span{animation:dot .8s infinite;display:inline-block}
+.loading-dots span:nth-child(2){animation-delay:.2s}
+.loading-dots span:nth-child(3){animation-delay:.4s}
+@keyframes dot{0%,80%,100%{opacity:.3;transform:translateY(0)}40%{opacity:1;transform:translateY(-3px)}}
+
+/* Animations */
+@keyframes fadeIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+.animate-in{animation:fadeIn .4s ease forwards}
+
+/* Scroll */
+html{scroll-behavior:smooth}
+</style>
+</head>
+<body>
+<div class="container">
+  <header>
+    <div class="eyebrow">Samsung Galaxy Flagship</div>
+    <h1>S23 → S27 진화 시뮬레이터</h1>
+    <p>각 세대를 선택하고 AI 에이전트에게 자유롭게 질문하세요</p>
+  </header>
+
+  <!-- Timeline -->
+  <div class="timeline" id="timeline">
+    <div class="timeline-indicator" id="tli"></div>
+    <button class="timeline-btn active" onclick="selectModel(0)" id="tb0">S23</button>
+    <button class="timeline-btn" onclick="selectModel(1)" id="tb1">S24</button>
+    <button class="timeline-btn" onclick="selectModel(2)" id="tb2">S25</button>
+    <button class="timeline-btn" onclick="selectModel(3)" id="tb3">S26</button>
+    <button class="timeline-btn" onclick="selectModel(4)" id="tb4">S27</button>
+  </div>
+
+  <div class="main-grid">
+    <!-- Phone visual -->
+    <div class="phone-panel" id="phonePanel">
+      <div class="phone-frame">
+        <div class="phone-body" id="phoneBody">
+          <div class="phone-notch" id="phoneNotch"></div>
+          <div class="phone-screen" id="phoneScreen"><span id="phoneEmoji">📱</span></div>
+          <div class="phone-home" id="phoneHome"></div>
+        </div>
+      </div>
+      <div class="model-name" id="modelName">Galaxy S23</div>
+      <div class="model-year" id="modelYear">2023</div>
+      <div class="status-badge status-confirmed" id="statusBadge">✓ 출시 완료</div>
+
+      <div style="margin-top:1.5rem">
+        <div style="font-size:11px;color:var(--text3);margin-bottom:.75rem;letter-spacing:1px;text-transform:uppercase">성능 지수</div>
+        <div class="bar-grid" id="barGrid"></div>
+      </div>
+    </div>
+
+    <!-- Specs -->
+    <div class="specs-panel">
+      <div class="spec-section" id="specsMain">
+        <h3>핵심 스펙</h3>
+        <div class="spec-grid" id="specGrid"></div>
+      </div>
+      <div class="spec-section" id="specsEvo">
+        <h3>이 세대의 주요 진화</h3>
+        <div id="evoList"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- AI Chat -->
+  <div class="chat-section">
+    <h3>🤖 AI 에이전트 <span class="chat-badge">CLAUDE</span></h3>
+    <div class="quick-btns" id="quickBtns">
+      <button class="quick-btn" onclick="quickAsk('이 모델의 가장 큰 장점은?')">가장 큰 장점은?</button>
+      <button class="quick-btn" onclick="quickAsk('전 세대와 비교해서 달라진 점은?')">전 세대 대비 변화</button>
+      <button class="quick-btn" onclick="quickAsk('카메라 성능에 대해 자세히 설명해줘')">카메라 심층 분석</button>
+      <button class="quick-btn" onclick="quickAsk('이 폰을 사야 하는 이유를 설명해줘')">구매 추천 이유</button>
+      <button class="quick-btn" onclick="quickAsk('S23부터 S27까지 전체 진화를 요약해줘')">전체 진화 요약</button>
+    </div>
+    <div class="chat-messages" id="chatMessages">
+      <div class="msg msg-ai">안녕하세요! 저는 Galaxy S 시리즈 전문 AI 에이전트입니다. S23부터 S27까지 어떤 것이든 물어보세요 📱</div>
+    </div>
+    <div class="chat-input-row">
+      <input class="chat-input" id="chatInput" placeholder="예: S25의 카메라가 S24보다 얼마나 좋아졌나요?" onkeydown="if(event.key==='Enter')sendChat()" />
+      <button class="chat-send" id="chatSend" onclick="sendChat()">전송 →</button>
+    </div>
+  </div>
+</div>
+
+<script>
+const MODELS = [
+  {
+    id:'S23', year:'2023', emoji:'📱',
+    status:'confirmed', statusText:'출시 완료',
+    statusClass:'status-confirmed',
+    specs:[
+      {label:'디스플레이',value:'6.1" Dynamic AMOLED 2X',new:false},
+      {label:'프로세서',value:'Snapdragon 8 Gen 2',new:false},
+      {label:'메인 카메라',value:'50MP f/1.8',new:false},
+      {label:'배터리',value:'3,900mAh',new:false},
+      {label:'RAM',value:'8GB LPDDR5X',new:false},
+      {label:'저장공간',value:'128 / 256GB',new:false},
+      {label:'OS',value:'Android 13 / One UI 5',new:false},
+      {label:'충전',value:'25W 유선 · 15W 무선',new:false},
+    ],
+    evolution:[
+      'Snapdragon 8 Gen 2 — 45% CPU 향상 (갤럭시 전용 클럭)',
+      'Armor Aluminum 2 & Gorilla Glass Victus 2 적용',
+      '200MP 지원 카메라 아키텍처 도입 (Ultra)',
+      'Wi-Fi 6E · Bluetooth 5.3 첫 탑재',
+    ],
+    bars:{CPU:62,GPU:58,카메라:65,배터리:55,AI:40,디스플레이:70},
+    color:'#4fc3f7',
+  },
+  {
+    id:'S24', year:'2024', emoji:'✨',
+    status:'confirmed', statusText:'출시 완료',
+    statusClass:'status-confirmed',
+    specs:[
+      {label:'디스플레이',value:'6.2" Dynamic AMOLED 2X',new:false},
+      {label:'프로세서',value:'Snapdragon 8 Gen 3',new:true},
+      {label:'메인 카메라',value:'50MP f/1.8',new:false},
+      {label:'배터리',value:'4,000mAh',new:true},
+      {label:'RAM',value:'8GB LPDDR5X',new:false},
+      {label:'저장공간',value:'128 / 256GB',new:false},
+      {label:'OS',value:'Android 14 / One UI 6.1',new:true},
+      {label:'Galaxy AI',value:'Circle to Search · 통화 통역',new:true},
+    ],
+    evolution:[
+      'Galaxy AI 최초 탑재 — 온디바이스 + 클라우드 AI',
+      'Circle to Search — 화면 어디서든 Google 검색',
+      '실시간 통화 통역 기능 추가',
+      '7년 OS 업데이트 보장 정책 시작',
+      '티타늄 프레임 (Ultra) 도입',
+    ],
+    bars:{CPU:72,GPU:70,카메라:70,배터리:57,AI:72,디스플레이:75},
+    color:'#7c4dff',
+  },
+  {
+    id:'S25', year:'2025', emoji:'🚀',
+    status:'confirmed', statusText:'출시 완료',
+    statusClass:'status-confirmed',
+    specs:[
+      {label:'디스플레이',value:'6.2" Dynamic AMOLED 2X',new:false},
+      {label:'프로세서',value:'Snapdragon 8 Elite',new:true},
+      {label:'메인 카메라',value:'50MP f/1.8 (개선 ISP)',new:true},
+      {label:'배터리',value:'4,000mAh',new:false},
+      {label:'RAM',value:'12GB LPDDR5X',new:true},
+      {label:'저장공간',value:'128 / 256 / 512GB',new:true},
+      {label:'OS',value:'Android 15 / One UI 7',new:true},
+      {label:'Galaxy AI 2.0',value:'에이전트형 AI 어시스턴트',new:true},
+    ],
+    evolution:[
+      'Snapdragon 8 Elite — 40% CPU · 37% GPU 향상',
+      'Galaxy AI 2.0 — 에이전트형, 앱 간 연계 작업 자동화',
+      'One UI 7 전면 개편 — Now Bar 잠금화면 위젯',
+      'RAM 12GB로 상향, 멀티태스킹 대폭 강화',
+      'ProVisual Engine 업그레이드 — 야간 촬영 30% 향상',
+    ],
+    bars:{CPU:85,GPU:83,카메라:78,배터리:57,AI:88,디스플레이:78},
+    color:'#4caf50',
+  },
+  {
+    id:'S26', year:'2026', emoji:'🔮',
+    status:'rumored', statusText:'루머 / 예상',
+    statusClass:'status-rumored',
+    specs:[
+      {label:'디스플레이',value:'6.2" Dynamic AMOLED 3 (예상)',new:true},
+      {label:'프로세서',value:'Snapdragon 8 Elite Gen 2',new:true},
+      {label:'메인 카메라',value:'200MP f/1.7 (예상)',new:true},
+      {label:'배터리',value:'4,200mAh (예상)',new:true},
+      {label:'RAM',value:'12GB LPDDR5X+',new:true},
+      {label:'저장공간',value:'256 / 512GB (예상)',new:true},
+      {label:'OS',value:'Android 16 / One UI 8 (예상)',new:true},
+      {label:'온디바이스 AI',value:'완전 온칩 LLM (예상)',new:true},
+    ],
+    evolution:[
+      '메인 카메라 200MP 탑재 — 표준 라인업 역대 최고 해상도',
+      '완전 온디바이스 LLM 구동 — 인터넷 없이 AI 작동',
+      'AMOLED 3세대 패널 — 40% 전력 효율 향상 예상',
+      'Snapdragon 8 Elite Gen 2 — NPU 2배 향상',
+      'Wi-Fi 7 · Bluetooth 5.4 탑재 예상',
+    ],
+    bars:{CPU:92,GPU:90,카메라:88,배터리:63,AI:94,디스플레이:86},
+    color:'#ff7043',
+  },
+  {
+    id:'S27', year:'2027', emoji:'🌌',
+    status:'future', statusText:'미래 전망',
+    statusClass:'status-future',
+    specs:[
+      {label:'디스플레이',value:'6.3" Micro-LED AMOLED (전망)',new:true},
+      {label:'프로세서',value:'Snapdragon 8 Gen 5 (전망)',new:true},
+      {label:'메인 카메라',value:'200MP + 광학 가변 줌 (전망)',new:true},
+      {label:'배터리',value:'고체 배터리 4,500mAh (전망)',new:true},
+      {label:'RAM',value:'16GB LPDDR6 (전망)',new:true},
+      {label:'저장공간',value:'256 / 512GB / 1TB (전망)',new:true},
+      {label:'OS',value:'Android 17 / One UI 9 (전망)',new:true},
+      {label:'AI 플랫폼',value:'자율형 멀티모달 AI (전망)',new:true},
+    ],
+    evolution:[
+      '고체 배터리 — 4,500mAh로 배터리 수명 2배 연장 전망',
+      'Micro-LED AMOLED 하이브리드 — 번인 제로, 무한 명암비',
+      '자율형 AI 에이전트 — 사용자 없이 복합 작업 수행',
+      '광학 가변 줌 — 1x~10x 무단 전환 (잠망경 없는 구조)',
+      '뇌파·생체신호 헬스 센서 통합 전망',
+    ],
+    bars:{CPU:99,GPU:97,카메라:96,배터리:80,AI:99,디스플레이:95},
+    color:'#ff4081',
+  },
+];
+
+let current=0;
+let chatHistory=[];
+
+function selectModel(i){
+  current=i;
+  document.querySelectorAll('.timeline-btn').forEach((b,j)=>{
+    b.classList.toggle('active',j===i);
+  });
+  // Move indicator
+  const tl=document.getElementById('timeline');
+  const btns=tl.querySelectorAll('.timeline-btn');
+  const ind=document.getElementById('tli');
+  const btn=btns[i];
+  const tlRect=tl.getBoundingClientRect();
+  const btnRect=btn.getBoundingClientRect();
+  ind.style.left=(btnRect.left-tlRect.left-6)+'px';
+  ind.style.width=btnRect.width+'px';
+
+  const m=MODELS[i];
+  // Phone
+  document.getElementById('phoneBody').style.borderColor=m.color+'66';
+  document.getElementById('phoneScreen').style.background='linear-gradient(135deg,'+m.color+'11,'+m.color+'22)';
+  document.getElementById('phoneEmoji').textContent=m.emoji;
+  document.getElementById('modelName').textContent='Galaxy '+m.id;
+  document.getElementById('modelYear').textContent=m.year;
+  const sb=document.getElementById('statusBadge');
+  sb.className='status-badge '+m.statusClass;
+  sb.textContent=(m.status==='confirmed'?'✓ ':m.status==='rumored'?'◎ ':'◈ ')+m.statusText;
+
+  // Bars
+  const bg=document.getElementById('barGrid');
+  bg.innerHTML='';
+  Object.entries(m.bars).forEach(([k,v])=>{
+    bg.innerHTML+=`<div class="bar-row">
+      <div class="bar-label">${k}</div>
+      <div class="bar-track"><div class="bar-fill" style="width:0%" data-w="${v}%" id="bar_${k.replace(/\s/g,'_')}"></div></div>
+      <div class="bar-val">${v}</div>
+    </div>`;
+  });
+  setTimeout(()=>{
+    bg.querySelectorAll('.bar-fill').forEach(b=>{b.style.width=b.dataset.w});
+  },50);
+
+  // Specs
+  const sg=document.getElementById('specGrid');
+  sg.innerHTML='';
+  m.specs.forEach(s=>{
+    sg.innerHTML+=`<div class="spec-item animate-in">
+      <div class="spec-label">${s.label}</div>
+      <div class="spec-value">${s.value}${s.new?'<span class="spec-new">NEW</span>':''}</div>
+    </div>`;
+  });
+
+  // Evolution
+  const el=document.getElementById('evoList');
+  el.innerHTML='';
+  m.evolution.forEach(e=>{
+    el.innerHTML+=`<div class="evolution-tag animate-in"><div class="dot"></div>${e}</div>`;
+  });
+}
+
+async function sendChat(){
+  const inp=document.getElementById('chatInput');
+  const msg=inp.value.trim();
+  if(!msg)return;
+  inp.value='';
+  addMsg(msg,'user');
+  await askClaude(msg);
+}
+
+function quickAsk(q){
+  document.getElementById('chatInput').value=q;
+  sendChat();
+}
+
+function addMsg(text,role){
+  const el=document.getElementById('chatMessages');
+  const div=document.createElement('div');
+  div.className='msg msg-'+role;
+  div.innerHTML=text;
+  el.appendChild(div);
+  el.scrollTop=el.scrollHeight;
+  return div;
+}
+
+async function askClaude(userMsg){
+  const btn=document.getElementById('chatSend');
+  btn.disabled=true;
+  const m=MODELS[current];
+  const loadDiv=addMsg('<div class="loading-dots"><span>●</span><span>●</span><span>●</span></div>','ai');
+
+  const systemPrompt=`당신은 Samsung Galaxy S 플래그십 시리즈 전문 AI 에이전트입니다.
+현재 사용자가 보고 있는 모델: Galaxy ${m.id} (${m.year})
+상태: ${m.statusText}
+
+이 모델의 스펙:
+${m.specs.map(s=>s.label+': '+s.value).join('\n')}
+
+주요 진화 포인트:
+${m.evolution.join('\n')}
+
+S23부터 S27까지 전체 시리즈 맥락에서 답변하세요.
+한국어로 답변하되, 전문적이면서도 친근하게 설명하세요.
+답변은 200자 내외로 간결하게 하되, 핵심을 명확히 전달하세요.
+${m.status!=='confirmed'?' S26/S27은 공식 확정이 아닌 루머/전망임을 언급하세요.':''}`;
+
+  chatHistory.push({role:'user',content:userMsg});
+
+  try{
+    const res=await fetch('https://api.anthropic.com/v1/messages',{
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({
+        model:'claude-sonnet-4-20250514',
+        max_tokens:1000,
+        system:systemPrompt,
+        messages:chatHistory,
+      })
+    });
+    const data=await res.json();
+    const reply=data.content.map(c=>c.text||'').join('');
+    chatHistory.push({role:'assistant',content:reply});
+    loadDiv.innerHTML=reply;
+    document.getElementById('chatMessages').scrollTop=9999;
+  }catch(e){
+    loadDiv.innerHTML='⚠️ 연결 오류가 발생했습니다. 잠시 후 다시 시도해주세요.';
+  }
+  btn.disabled=false;
+}
+
+// Init
+window.addEventListener('load',()=>{
+  selectModel(0);
+});
+</script>
+</body>
+</html>
